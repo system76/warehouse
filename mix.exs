@@ -1,15 +1,16 @@
-defmodule CopyCat.MixProject do
+defmodule Warehouse.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :copy_cat,
+      app: :warehouse,
       version: "0.1.0",
       elixir: "~> 1.10",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [
-        copy_cat: [
+        warehouse: [
           include_executables_for: [:unix],
           applications: [runtime_tools: :permanent]
         ]
@@ -21,7 +22,7 @@ defmodule CopyCat.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {CopyCat.Application, []}
+      mod: {Warehouse.Application, []}
     ]
   end
 
@@ -29,12 +30,20 @@ defmodule CopyCat.MixProject do
   defp deps do
     [
       {:appsignal, "~> 1.0"},
-      {:bottle, github: "system76/bottle", branch: "elixir"},
+      {:bottle, github: "system76/bottle", branch: "elixir", sha: "63d3cf0"},
       {:broadway_sqs, "~> 0.6.0"},
-      {:saxy, "~> 1.1"},
+      {:decimal, "~> 2.0", override: true},
+      {:ecto_enum, "~> 1.4"},
+      {:ecto_sql, "~> 3.5"},
       {:hackney, "~> 1.16"},
       {:jason, "~> 1.2", override: true},
-      {:credo, "~> 1.3", only: [:dev, :test]}
+      {:myxql, "~> 0.2"},
+      {:saxy, "~> 1.1"},
+      {:credo, "~> 1.3", only: [:dev, :test]},
+      {:ex_machina, "~> 2.4", only: :test}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
