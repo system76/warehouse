@@ -1,3 +1,3 @@
-# Copy Cat
+# Warehouse
 
-A template repository for new queue based services.
+An inventory microservice
