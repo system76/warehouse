@@ -1,0 +1,7 @@
+_build
+.git
+deps
+docs
+fixture
+priv
+test
