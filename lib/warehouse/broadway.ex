@@ -1,4 +1,4 @@
-defmodule CopyCat.Broadway do
+defmodule Warehouse.Broadway do
   use Broadway
   use Appsignal.Instrumentation.Decorators
 
@@ -7,7 +7,7 @@ defmodule CopyCat.Broadway do
   alias Broadway.Message
 
   def start_link(_opts) do
-    producer_module = Application.fetch_env!(:copy_cat, :producer)
+    producer_module = Application.fetch_env!(:warehouse, :producer)
 
     Broadway.start_link(__MODULE__,
       name: __MODULE__,
@@ -29,6 +29,17 @@ defmodule CopyCat.Broadway do
   @impl true
   @decorate transaction(:queue)
   def handle_message(_, %Message{} = message, _context) do
+    bottle =
+      message
+      |> URI.decode()
+      |> Bottle.Core.V1.Bottle.decode()
+
+    Bottle.RequestId.read(:queue, bottle)
+
+    with {:error, reason} <- notify_handler(bottle.resource) do
+      Logger.error(reason)
+    end
+
     message
   end
 
@@ -40,5 +51,8 @@ defmodule CopyCat.Broadway do
   @impl true
   def handle_failed([failed_message], _context) do
     [failed_message]
+  end
+
+  defp notify_handler({:part_received, %{part: _part}}) do
   end
 end

@@ -5,7 +5,7 @@ producer_config =
   |> System.fetch_env!()
   |> Jason.decode!()
 
-config :copy_cat,
+config :warehouse,
   producer:
     {BroadwaySQS.Producer,
      queue_url: producer_config["queue_url"],

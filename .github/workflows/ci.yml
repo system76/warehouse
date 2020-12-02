@@ -20,6 +20,13 @@ jobs:
     container:
       image: elixir:1.10-alpine
 
+    services:
+      mysql:
+        image: mysql
+        env:
+          MYSQL_DATABASE: hal_test
+          MYSQL_ROOT_PASSWORD: system76
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
@@ -34,13 +41,20 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          apk add --no-cache gcc g++ git imagemagick libmcrypt-dev make musl-dev
+          apk add --no-cache gcc g++ git imagemagick libmcrypt-dev make musl-dev mysql-client
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
 
+      - name: Seed Data
+        run: |
+          mysql -h mysql -P 3306 -u root -p hal_test < priv/repo/seeds.sql
+
       - name: Run Tests
         run: mix test
+        env:
+          DB_HOST: mysql
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
 
   Format:
     runs-on: ubuntu-latest

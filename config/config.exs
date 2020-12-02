@@ -1,6 +1,7 @@
 use Mix.Config
 
-config :copy_cat,
+config :warehouse,
+  ecto_repos: [Warehouse.Repo],
   producer:
     {BroadwaySQS.Producer,
      queue_url: "",
@@ -17,6 +18,6 @@ config :logger, :console,
 
 config :appsignal, :config,
   active: false,
-  name: "Copy Cat"
+  name: "Warehouse"
 
 import_config "#{Mix.env()}.exs"
