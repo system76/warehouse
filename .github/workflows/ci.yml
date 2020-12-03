@@ -23,6 +23,7 @@ jobs:
     services:
       mysql:
         image: mysql:5.7.24
+        options: -v ${{ github.workspace }}/repo:/docker-entrypoint-initdb.d
         env:
           MYSQL_ROOT_PASSWORD: system76
 
@@ -40,14 +41,10 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          apk add --no-cache gcc g++ git imagemagick libmcrypt-dev make musl-dev mysql-client-core-5.7
+          apk add --no-cache gcc g++ git imagemagick libmcrypt-dev make musl-dev
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
-
-      - name: Seed Data
-        run: |
-          mysql -h mysql -P 3306 -u root -p hal_test < priv/repo/seeds.sql
 
       - name: Run Tests
         run: mix test
