@@ -25,6 +25,7 @@ jobs:
         image: mysql:5.7.24
         options: -v ${{ github.workspace }}/repo:/docker-entrypoint-initdb.d
         env:
+          MYSQL_DATABASE: hal_test
           MYSQL_ROOT_PASSWORD: system76
 
     steps:
