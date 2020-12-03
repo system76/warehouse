@@ -20,6 +20,12 @@ jobs:
     container:
       image: elixir:1.10-alpine
 
+    services:
+      mysql:
+        image: mysql:5.7.24
+        env:
+          MYSQL_ROOT_PASSWORD: system76
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v1
@@ -39,8 +45,15 @@ jobs:
           mix local.hex --force
           mix deps.get
 
+      - name: Seed Data
+        run: |
+          mysql -h mysql -P 3306 -u root -p --ssl-mode=DISABLED hal_test < priv/repo/seeds.sql
+
       - name: Run Tests
         run: mix test
+        env:
+          DB_HOST: mysql
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
 
   Format:
     runs-on: ubuntu-latest
