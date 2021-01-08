@@ -1,5 +1,8 @@
 import Config
 
+config :warehouse,
+  producer: {Broadway.DummyProducer, []}
+
 config :warehouse, Warehouse.Repo,
   username: "root",
   password: "warehouse",

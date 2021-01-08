@@ -19,6 +19,8 @@ config :logger, :console,
   metadata: [:request_id],
   level: :info
 
+config :grpc, start_server: true
+
 config :ex_aws,
   access_key_id: nil,
   secret_access_key: nil,
