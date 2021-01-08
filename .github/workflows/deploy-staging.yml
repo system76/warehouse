@@ -67,6 +67,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.template.outputs.task-definition }}
-          service: staging-genesis76-copy-cat
+          service: staging-genesis76-warehouse
           cluster: genesis76-us-east-2
           wait-for-service-stability: true

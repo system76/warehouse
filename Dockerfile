@@ -1,4 +1,4 @@
-FROM elixir:1.10-alpine as build
+FROM elixir:1.11-alpine as build
 
 # Install deps
 RUN set -xe; \
@@ -9,6 +9,7 @@ RUN set -xe; \
         git \
         make \
         musl-dev \
+        python3 \
         tzdata;
 
 # Use the standard /usr/local/src destination
@@ -70,6 +71,7 @@ LABEL \
 ENV \
     PATH="/usr/local/bin:$PATH" \
     VERSION="${VERSION}" \
+    APP_REVISION="${VERSION}" \
     MIX_APP="warehouse" \
     MIX_ENV="prod" \
     SHELL="/bin/bash"
@@ -79,7 +81,7 @@ USER warehouse
 
 WORKDIR /warehouse
 
-EXPOSE 8080
+EXPOSE 50051
 
 ENTRYPOINT ["/warehouse/bin/warehouse"]
 

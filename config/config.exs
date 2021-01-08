@@ -1,4 +1,8 @@
-use Mix.Config
+import Config
+
+config :warehouse,
+  env: Mix.env(),
+  ecto_repos: [Warehouse.Repo]
 
 config :warehouse,
   producer:
@@ -15,8 +19,14 @@ config :logger, :console,
   metadata: [:request_id],
   level: :info
 
+config :ex_aws,
+  access_key_id: nil,
+  secret_access_key: nil,
+  region: nil
+
 config :appsignal, :config,
   active: false,
-  name: "Copy Cat"
+  ignore_errors: ["Ecto.NoResultsError"],
+  name: "Warehouse"
 
 import_config "#{Mix.env()}.exs"
