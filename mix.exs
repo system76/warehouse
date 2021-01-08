@@ -6,6 +6,7 @@ defmodule Warehouse.MixProject do
       app: :warehouse,
       version: "0.1.0",
       elixir: "~> 1.10",
+      elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       releases: [
@@ -25,16 +26,22 @@ defmodule Warehouse.MixProject do
     ]
   end
 
+  # Specifies which paths to compile per environment.
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:appsignal, "~> 1.0"},
       {:bottle, github: "system76/bottle", branch: "elixir", sha: "63d3cf0"},
       {:broadway_sqs, "~> 0.6.0"},
+      {:decimal, "~> 1.9.0", override: true},
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.5"},
       {:hackney, "~> 1.16"},
       {:jason, "~> 1.2", override: true},
+      {:myxql, "~> 0.4.0"},
       {:saxy, "~> 1.1"},
       {:credo, "~> 1.3", only: [:dev, :test]},
       {:ex_machina, "~> 2.4", only: :test}
