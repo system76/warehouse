@@ -29,5 +29,5 @@ config :ex_aws,
   region: warehouse_config["AWS_REGION"]
 
 config :appsignal, :config,
-  push_api_key: hal_config["APPSIGNAL_KEY"],
-  env: hal_config["ENVIRONMENT"]
+  push_api_key: warehouse_config["APPSIGNAL_KEY"],
+  env: warehouse_config["ENVIRONMENT"]
