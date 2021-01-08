@@ -4,8 +4,8 @@ defmodule Warehouse.Schemas.Part do
   alias Warehouse.Schemas.{Location, Sku}
 
   schema "inventory_parts" do
-    belongs_to Location, :location
-    belongs_to Sku, :sku
+    belongs_to :location, Location
+    belongs_to :sku, Sku
 
     timestamps()
   end
