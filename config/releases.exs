@@ -27,3 +27,7 @@ config :ex_aws,
   access_key_id: warehouse_config["AWS_ACCESS_KEY_ID"],
   secret_access_key: warehouse_config["AWS_SECRET_ACCESS_KEY"],
   region: warehouse_config["AWS_REGION"]
+
+config :appsignal, :config,
+  push_api_key: hal_config["APPSIGNAL_KEY"],
+  env: hal_config["ENVIRONMENT"]
