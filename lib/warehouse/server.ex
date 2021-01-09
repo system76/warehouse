@@ -1,7 +1,7 @@
 defmodule Warehouse.Server do
   use GRPC.Server, service: Bottle.Inventory.V1.Service
 
-  alias Warehouse.{Repo, Components}
+  alias Warehouse.{Repo, Components, Schemas}
   alias Bottle.Inventory.V1.{Component, ComponentAvailabilityListRequest, ComponentAvailabilityListResponse}
   alias GRPC.Server
 
