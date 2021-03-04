@@ -5,14 +5,7 @@ config :warehouse,
   ecto_repos: [Warehouse.Repo]
 
 config :warehouse,
-  producer:
-    {BroadwaySQS.Producer,
-     queue_url: "",
-     config: [
-       access_key_id: "",
-       secret_access_key: "",
-       region: "us-east-2"
-     ]}
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []}
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
