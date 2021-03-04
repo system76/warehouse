@@ -33,9 +33,10 @@ defmodule Warehouse.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:amqp, "~> 2.0", override: true},
       {:appsignal, "~> 1.0"},
-      {:bottle, github: "system76/bottle", branch: "elixir", sha: "63d3cf0"},
-      {:broadway_sqs, "~> 0.6.0"},
+      {:bottle, github: "system76/bottle", ref: "710132e"},
+      {:broadway_rabbitmq, "~> 0.6.0"},
       {:decimal, "~> 1.9.0", override: true},
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.5"},
