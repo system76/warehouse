@@ -35,7 +35,7 @@ defmodule Warehouse.MixProject do
     [
       {:amqp, "~> 2.0", override: true},
       {:appsignal, "~> 1.0"},
-      {:bottle, github: "system76/bottle", ref: "710132e"},
+      {:bottle, github: "system76/bottle", ref: "b3b78b6"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:decimal, "~> 1.9.0", override: true},
       {:ecto_enum, "~> 1.4"},
