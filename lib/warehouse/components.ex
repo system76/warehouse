@@ -1,9 +1,8 @@
 defmodule Warehouse.Components do
   import Ecto.Query
 
-  alias Bottle.Inventory.V1.Component
   alias Warehouse.Repo
-  alias Warehouse.Schemas.Configuration
+  alias Warehouse.Schemas.{Component, Configuration}
 
   @spec number_available(Component.t()) :: integer
   def number_available(%Component{id: component_id}) do

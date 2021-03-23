@@ -17,6 +17,7 @@ config :warehouse,
   producer:
     {BroadwayRabbitMQ.Producer,
      queue: warehouse_config["RABBITMQ_QUEUE_NAME"],
+     on_failure: :reject_and_requeue,
      connection: [
        username: warehouse_config["RABBITMQ_USERNAME"],
        password: warehouse_config["RABBITMQ_PASSWORD"],
