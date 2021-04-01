@@ -53,15 +53,13 @@ defmodule Warehouse.Broadway do
   end
 
   defp notify_handler({:part_created, message}) do
-    Logger.metadata(user_id: message.user.id)
     Logger.info("Handling Part Created message")
-    Inventory.receive_part(message)
+    Inventory.create_part(message)
   end
 
   defp notify_handler({:part_updated, message}) do
-    Logger.metadata(user_id: message.user.id)
     Logger.info("Handling Part Updated message")
-    Inventory.move_part(message)
+    Inventory.update_part(message)
   end
 
   defp notify_handler({event, _message}) do
