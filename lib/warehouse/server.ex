@@ -10,10 +10,13 @@ defmodule Warehouse.Server do
   alias GRPC.Server
 
   @spec component_availability_list(ComponentAvailabilityListRequest.t(), GRPC.Server.Stream.t()) :: any()
-  def component_availability_list(%{components: []}, stream) do
+  def component_availability_list(%{components: components}, stream) do
+    component_ids = Enum.map(components, & &1.id)
+
     query =
       from c in Schemas.Component,
-        where: c.removed == 0
+        where: c.removed == 0,
+        where: c.id in ^component_ids
 
     Repo.transaction(
       fn ->
