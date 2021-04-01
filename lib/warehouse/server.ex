@@ -1,6 +1,8 @@
 defmodule Warehouse.Server do
   use GRPC.Server, service: Bottle.Inventory.V1.Service
 
+  require Logger
+
   import Ecto.Query
 
   alias Warehouse.{Repo, Components, Schemas}
@@ -21,10 +23,15 @@ defmodule Warehouse.Server do
   end
 
   defp calculate_component_availability(%Schemas.Component{} = component) do
+    component_id = to_string(component.id)
+    number_available = Components.number_available(component)
+
+    Logger.info("Component #{component_id} has #{number_available} available")
+
     ComponentAvailabilityListResponse.new(
-      available: Components.number_available(component),
-      component: Component.new(id: to_string(component.id)),
-      request_id: Bottle.RequestId.write(:queue)
+      available: number_available,
+      component: Component.new(id: component_id),
+      request_id: Bottle.RequestId.write(:rpc)
     )
   end
 end
