@@ -34,14 +34,14 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:amqp, "~> 2.0", override: true},
-      {:appsignal, "~> 1.0"},
-      {:bottle, github: "system76/bottle", ref: "b3b78b6"},
+      {:bottle, github: "system76/bottle", ref: "0fc599f"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:decimal, "~> 1.9.0", override: true},
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.5"},
       {:ex_aws_sqs, "~> 3.2"},
       {:ex_aws, "~> 2.1.6"},
+      {:flow, "~> 1.1"},
       {:hackney, "~> 1.16"},
       {:jason, "~> 1.2", override: true},
       {:myxql, "~> 0.4.0"},
