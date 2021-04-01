@@ -15,11 +15,16 @@ defmodule Warehouse.Server do
       from c in Schemas.Component,
         where: c.removed == 0
 
-    query
-    |> Repo.all()
-    |> Stream.map(&calculate_component_availability/1)
-    |> Stream.each(&Server.send_reply(stream, &1))
-    |> Stream.run()
+    Repo.transaction(
+      fn ->
+        query
+        |> Repo.stream()
+        |> Stream.map(&calculate_component_availability/1)
+        |> Stream.each(&Server.send_reply(stream, &1))
+        |> Stream.run()
+      end,
+      timeout: :infinity
+    )
   end
 
   defp calculate_component_availability(%Schemas.Component{} = component) do
