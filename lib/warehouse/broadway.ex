@@ -4,6 +4,7 @@ defmodule Warehouse.Broadway do
   require Logger
 
   alias Broadway.Message
+  alias Warehouse.Inventory
 
   def start_link(_opts) do
     producer_module = Application.fetch_env!(:warehouse, :producer)
