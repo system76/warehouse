@@ -10,8 +10,8 @@ defmodule Warehouse.Application do
   def start(_type, _args) do
     children = [
       Warehouse.Repo,
-      {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_052}}
-      # {Warehouse.Broadway, []}
+      {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}}
+      {Warehouse.Broadway, []}
     ]
 
     Logger.info("Starting Warehouse")
