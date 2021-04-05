@@ -1,6 +1,8 @@
 defmodule Warehouse.Schemas.Location do
   use Ecto.Schema
 
+  alias Warehouse.Schemas.Part
+
   schema "inventory_locations" do
     field :area, AreaEnum, default: :receiving
     field :disabled, :boolean, default: false

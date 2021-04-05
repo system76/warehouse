@@ -7,30 +7,34 @@ defmodule Warehouse.Inventory do
 
   import Ecto.Query
 
-  alias Warehouse.{Components, Repo, Schemas}
+  alias Warehouse.{Caster, Components, Repo, Schemas}
   alias Bottle.Inventory.V1.{Component, ComponentAvailabilityUpdated, PartCreated, PartUpdated}
 
   def create_part(%PartCreated{part: part}) do
-    attrs = %{
-      location_id: part.location.id,
-      serial_number: part.serial_number,
-      sku_id: part.sku.id,
-      uuid: part.id
-    }
-
+    attrs = Caster.cast(part)
     changeset = Schemas.Part.changeset(%Schemas.Part{}, attrs)
 
     with {:ok, new_part} <- Repo.insert(changeset) do
-      new_part
-      |> applicable_components()
-      |> Enum.each(&broadcast_availability_change/1)
+      broadcast_component_availability_change(new_part)
     end
   end
 
-  def update_part(%PartUpdated{old: _old, new: _new}) do
-    # %Movement{}
-    # |> Movement.changeset(%{location: location.id, part_id: part.id, user_id: user.id})
-    # |> Repo.insert()
+  def update_part(%PartUpdated{old: %{id: id}, new: new}) do
+    query =
+      from p in Schemas.Part,
+        where: p.uuid == ^id
+
+    attrs = Caster.cast(new)
+
+    changeset =
+      query
+      |> Repo.one()
+      |> Schemas.Part.changeset(attrs)
+
+    with {:ok, _updated_part} <- Repo.update(changeset) do
+      maybe_track_part_movement(changeset)
+      maybe_broadcast_availability_changes(changeset)
+    end
   end
 
   defp applicable_components(%{sku: %{id: sku_id}}) do
@@ -39,6 +43,12 @@ defmodule Warehouse.Inventory do
         where: c.sku == ^sku_id
 
     Repo.all(query)
+  end
+
+  defp broadcast_component_availability_change(part) do
+    part
+    |> applicable_components()
+    |> Enum.each(&broadcast_availability_change/1)
   end
 
   defp broadcast_availability_change(component) do
@@ -55,5 +65,21 @@ defmodule Warehouse.Inventory do
       )
 
     Bottle.publish(message, source: :warehouse)
+  end
+
+  defp maybe_broadcast_availability_changes(%{changes: changes, data: part}) do
+    if Map.has_key?(changes, :assembly_build_id) or Map.has_key?(changes, :location_id) do
+      broadcast_component_availability_change(part)
+    end
+  end
+
+  defp maybe_track_part_movement(%{changes: %{location_id: location_id}, data: %{id: id}}) do
+    %Schemas.Movement{}
+    |> Schemas.Movement.changeset(%{location: location_id, part_id: id})
+    |> Repo.insert()
+  end
+
+  defp maybe_track_part_movement(_) do
+    :ignored
   end
 end

@@ -6,8 +6,6 @@ defmodule Warehouse.Schemas.Movement do
   alias Warehouse.Schemas.{Location, Part}
 
   schema "inventory_part_movements" do
-    field :user_id, :string
-
     belongs_to :location, Location
     belongs_to :part, Part
 
@@ -16,8 +14,8 @@ defmodule Warehouse.Schemas.Movement do
 
   def changeset(part, attrs) do
     part
-    |> cast(attrs, [:location_id, :part_id, :user_id])
-    |> validate_required([:location_id, :part_id, :user_id])
+    |> cast(attrs, [:location_id, :part_id])
+    |> validate_required([:location_id, :part_id])
     |> assoc_constraint(:sku)
     |> assoc_constraint(:location)
   end
