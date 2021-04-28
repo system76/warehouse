@@ -25,62 +25,86 @@ jobs:
           MYSQL_ROOT_PASSWORD: warehouse
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: erlef/setup-beam@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup (Elixir)
+        uses: erlef/setup-beam@v1
         with:
           otp-version: 22
           elixir-version: '1.11'
-      - run: mix deps.get
-      - run: mix test
+
+      - name: Install (Deps)
+        run: mix deps.get
+
+      - name: Test
+        run: mix test
         env:
-          DB_HOST: mysql
           DB_PORT: ${{ job.services.mysql.ports[3306] }}
 
   Format:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: erlef/setup-beam@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup (Elixir)
+        uses: erlef/setup-beam@v1
         with:
           otp-version: 22
           elixir-version: '1.11'
-      - run: mix deps.get
-      - run: mix format --check-formatted
+
+      - name: Install (Deps)
+        run: mix deps.get
+
+      - name: Format
+        run: mix format --check-formatted
 
   Credo:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: erlef/setup-beam@v1
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup (Elixir)
+        uses: erlef/setup-beam@v1
         with:
           otp-version: 22
           elixir-version: '1.11'
-      - run: mix deps.get
-      - run: mix credo
+
+      - name: Install (Deps)
+        run: mix deps.get
+
+      - name: Credo
+        run: mix credo
 
   Dialyzer:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: set cache key
-        id: cache_key
-        run: |
-          mix_hash="${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}"
-          echo "::set-output name=mix_hash::$mix_hash"
-      - uses: actions/cache@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Cache (Plt)
+        uses: actions/cache@v2
         with:
           path: |
             _build/dev/*.plt
             _build/dev/*.plt.hash
-          key: plt-cache-${{ steps.cache_key.outputs.mix_hash }}
+          key: plt-cache-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
           restore-keys: |
             plt-cache-
-      - uses: erlef/setup-beam@v1
+
+      - name: Setup (Elixir)
+        uses: erlef/setup-beam@v1
         with:
           otp-version: 22
           elixir-version: '1.11'
-      - run: mix deps.get
-      - run: mix dialyzer
+
+      - name: Install (Deps)
+        run: mix deps.get
+
+      - name: Dialyzer
+        run: mix dialyzer
