@@ -28,16 +28,15 @@ defmodule Warehouse.Broadway do
 
   @impl true
   @decorate transaction(:queue)
-  def handle_message(_, %Message{} = message, _context) do
+  def handle_message(_, %Message{data: data} = message, _context) do
     bottle =
-      message
+      data
       |> URI.decode()
       |> Bottle.Core.V1.Bottle.decode()
 
     Bottle.RequestId.read(:queue, bottle)
 
-    with {:error, reason} <- notify_handler(bottle.resource) do
-      Logger.error(reason)
+    with _ignored <- notify_handler(bottle.resource) do
     end
 
     message
@@ -53,6 +52,7 @@ defmodule Warehouse.Broadway do
     [failed_message]
   end
 
-  defp notify_handler({:part_received, %{part: _part}}) do
+  defp notify_handler(_resource) do
+    :ignored
   end
 end

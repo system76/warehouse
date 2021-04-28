@@ -46,7 +46,8 @@ defmodule Warehouse.MixProject do
       {:myxql, "~> 0.4.0"},
       {:saxy, "~> 1.1"},
       {:credo, "~> 1.3", only: [:dev, :test]},
-      {:ex_machina, "~> 2.4", only: :test}
+      {:ex_machina, "~> 2.4", only: :test},
+      {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
