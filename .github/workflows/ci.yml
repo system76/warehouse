@@ -20,6 +20,8 @@ jobs:
     services:
       mysql:
         image: mysql:5.7.24
+        ports:
+          - 3306:3306
         env:
           MYSQL_DATABASE: warehouse_test
           MYSQL_ROOT_PASSWORD: warehouse
@@ -39,8 +41,6 @@ jobs:
 
       - name: Test
         run: mix test
-        env:
-          DB_PORT: ${{ job.services.mysql.ports[3306] }}
 
   Format:
     runs-on: ubuntu-latest
