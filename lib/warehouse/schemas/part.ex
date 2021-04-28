@@ -5,6 +5,13 @@ defmodule Warehouse.Schemas.Part do
 
   alias Warehouse.Schemas.{Location, Sku}
 
+  @type t :: %__MODULE__{
+          location: Location.t(),
+          serial_number: String.t(),
+          sku: Sku.t(),
+          uuid: String.t()
+        }
+
   schema "inventory_parts" do
     field :uuid, :string
     field :serial_number, :string

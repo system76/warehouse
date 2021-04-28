@@ -11,7 +11,7 @@ defmodule Warehouse.Inventory do
   alias Bottle.Inventory.V1.{Component, ComponentAvailabilityUpdated, PartCreated, PartUpdated}
 
   def create_part(%PartCreated{part: part}) do
-    broadcast_component_availability_change(new_part)
+    broadcast_component_availability_change(part)
   end
 
   def update_part(%PartUpdated{new: new}) do

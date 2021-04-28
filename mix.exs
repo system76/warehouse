@@ -33,6 +33,7 @@ defmodule Warehouse.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:appsignal, "~> 1.0"},
       {:amqp, "~> 2.0", override: true},
       {:bottle, github: "system76/bottle", ref: "0fc599f"},
       {:broadway_rabbitmq, "~> 0.6.0"},

@@ -5,6 +5,11 @@ defmodule Warehouse.Schemas.Movement do
 
   alias Warehouse.Schemas.{Location, Part}
 
+  @type t :: %__MODULE__{
+          location: Location.t(),
+          part: Part.t()
+        }
+
   schema "inventory_part_movements" do
     belongs_to :location, Location
     belongs_to :part, Part

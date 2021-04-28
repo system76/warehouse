@@ -1,5 +1,6 @@
 defmodule Warehouse.Broadway do
   use Broadway
+  use Appsignal.Instrumentation.Decorators
 
   require Logger
 
@@ -36,9 +37,7 @@ defmodule Warehouse.Broadway do
 
     Bottle.RequestId.read(:queue, bottle)
 
-    with {:error, reason} <- notify_handler(bottle.resource) do
-      Logger.error(inspect(reason))
-    end
+    notify_handler(bottle.resource)
 
     message
   end
@@ -65,6 +64,6 @@ defmodule Warehouse.Broadway do
 
   defp notify_handler({event, _message}) do
     Logger.warn("Ignoring #{event} message")
-    {:ok, :ignored}
+    :ignored
   end
 end
