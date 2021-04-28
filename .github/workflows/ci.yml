@@ -17,9 +17,6 @@ jobs:
   Test:
     runs-on: ubuntu-latest
 
-    container:
-      image: elixir:1.11-alpine
-
     services:
       mysql:
         image: mysql:5.7.24
@@ -28,101 +25,62 @@ jobs:
           MYSQL_ROOT_PASSWORD: warehouse
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
         with:
-          persist-credentials: false
-
-      - name: Install (os)
-        run: apk add --no-cache gcc g++ git make musl-dev tar zstd
-
-      - name: Install (mix)
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-
-      - name: Cache
-        uses: actions/cache@v2
-        id: cache
-        with:
-          key: elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-${{ github.ref }}-test
-          restore-keys: |
-            elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-${{ github.ref }}-
-            elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-
-            elixir-
-          path: |
-            _build
-            deps
-
-      - name: Install (deps)
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: mix deps.get
-
-      - name: Run Tests
-        run: mix test
+          otp-version: 22
+          elixir-version: '1.11'
+      - run: mix deps.get
+      - run: mix test
         env:
           DB_HOST: mysql
+          DB_PORT: ${{ job.services.mysql.ports[3306] }}
 
   Format:
     runs-on: ubuntu-latest
 
-    container:
-      image: elixir:1.11-alpine
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
         with:
-          persist-credentials: false
-
-      - name: Install (os)
-        run: apk add --no-cache gcc g++ git make musl-dev
-
-      - name: Install (mix)
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get
-
-      - name: Run Formatter
-        run: mix format --check-formatted
+          otp-version: 22
+          elixir-version: '1.11'
+      - run: mix deps.get
+      - run: mix format --check-formatted
 
   Credo:
     runs-on: ubuntu-latest
 
-    container:
-      image: elixir:1.11-alpine
+    steps:
+      - uses: actions/checkout@v2
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 22
+          elixir-version: '1.11'
+      - run: mix deps.get
+      - run: mix credo
+
+  Dialyzer:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
-        with:
-          persist-credentials: false
-
-      - name: Install (os)
-        run: apk add --no-cache gcc g++ git make musl-dev tar zstd
-
-      - name: Install (mix)
+      - uses: actions/checkout@v2
+      - name: set cache key
+        id: cache_key
         run: |
-          mix local.rebar --force
-          mix local.hex --force
-
-      - name: Cache
-        uses: actions/cache@v2
-        id: cache
+          mix_hash="${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}"
+          echo "::set-output name=mix_hash::$mix_hash"
+      - uses: actions/cache@v2
         with:
-          key: elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-${{ github.ref }}-credo
-          restore-keys: |
-            elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-${{ github.ref }}-
-            elixir-${{ hashFiles('Dockerfile', 'mix.lock') }}-
-            elixir-
           path: |
-            _build
-            deps
-
-      - name: Install (deps)
-        if: steps.cache.outputs.cache-hit != 'true'
-        run: mix deps.get
-
-      - name: Run Credo
-        run: mix credo
+            _build/dev/*.plt
+            _build/dev/*.plt.hash
+          key: plt-cache-${{ steps.cache_key.outputs.mix_hash }}
+          restore-keys: |
+            plt-cache-
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: 22
+          elixir-version: '1.11'
+      - run: mix deps.get
+      - run: mix dialyzer
