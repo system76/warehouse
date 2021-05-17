@@ -15,18 +15,16 @@ config :warehouse, Warehouse.Repo,
 
 config :warehouse,
   producer:
-    {BroadwaySQS.Producer,
-     queue_url: warehouse_config["SQS_URL"],
-     config: [
-       access_key_id: warehouse_config["AWS_ACCESS_KEY_ID"],
-       secret_access_key: warehouse_config["AWS_SECRET_ACCESS_KEY"],
-       region: warehouse_config["AWS_REGION"]
+    {BroadwayRabbitMQ.Producer,
+     queue: warehouse_config["RABBITMQ_QUEUE_NAME"],
+     on_failure: :reject_and_requeue,
+     connection: [
+       username: warehouse_config["RABBITMQ_USERNAME"],
+       password: warehouse_config["RABBITMQ_PASSWORD"],
+       host: warehouse_config["RABBITMQ_HOST"],
+       port: warehouse_config["RABBITMQ_PORT"],
+       ssl_options: [verify: :verify_none]
      ]}
-
-config :ex_aws,
-  access_key_id: warehouse_config["AWS_ACCESS_KEY_ID"],
-  secret_access_key: warehouse_config["AWS_SECRET_ACCESS_KEY"],
-  region: warehouse_config["AWS_REGION"]
 
 config :appsignal, :config,
   push_api_key: warehouse_config["APPSIGNAL_KEY"],

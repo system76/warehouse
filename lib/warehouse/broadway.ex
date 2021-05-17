@@ -5,6 +5,7 @@ defmodule Warehouse.Broadway do
   require Logger
 
   alias Broadway.Message
+  alias Warehouse.Inventory
 
   def start_link(_opts) do
     producer_module = Application.fetch_env!(:warehouse, :producer)
@@ -36,8 +37,7 @@ defmodule Warehouse.Broadway do
 
     Bottle.RequestId.read(:queue, bottle)
 
-    with _ignored <- notify_handler(bottle.resource) do
-    end
+    notify_handler(bottle.resource)
 
     message
   end
@@ -52,7 +52,18 @@ defmodule Warehouse.Broadway do
     [failed_message]
   end
 
-  defp notify_handler(_resource) do
+  defp notify_handler({:part_created, message}) do
+    Logger.info("Handling Part Created message")
+    Inventory.create_part(message)
+  end
+
+  defp notify_handler({:part_updated, message}) do
+    Logger.info("Handling Part Updated message")
+    Inventory.update_part(message)
+  end
+
+  defp notify_handler({event, _message}) do
+    Logger.warn("Ignoring #{event} message")
     :ignored
   end
 end

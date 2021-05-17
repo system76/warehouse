@@ -34,8 +34,9 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:appsignal, "~> 1.0"},
-      {:bottle, github: "system76/bottle", branch: "elixir", sha: "63d3cf0"},
-      {:broadway_sqs, "~> 0.6.0"},
+      {:amqp, "~> 2.0", override: true},
+      {:bottle, github: "system76/bottle", ref: "0fc599f"},
+      {:broadway_rabbitmq, "~> 0.6.0"},
       {:decimal, "~> 1.9.0", override: true},
       {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.5"},

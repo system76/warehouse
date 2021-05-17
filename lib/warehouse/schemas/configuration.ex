@@ -3,6 +3,12 @@ defmodule Warehouse.Schemas.Configuration do
 
   alias Warehouse.Schemas.{Component, Sku}
 
+  @type t :: %__MODULE__{
+          component: Component.t(),
+          quantity: integer(),
+          sku: Sku.t()
+        }
+
   schema "inventory_configurations" do
     field :quantity, :integer, default: 1
 

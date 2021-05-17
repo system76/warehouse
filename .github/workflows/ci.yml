@@ -33,7 +33,7 @@ jobs:
       - name: Setup (Elixir)
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 22
+          otp-version: 23
           elixir-version: '1.11'
 
       - name: Cache
@@ -65,7 +65,7 @@ jobs:
       - name: Setup (Elixir)
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 22
+          otp-version: 23
           elixir-version: '1.11'
 
       - name: Install (Deps)
@@ -84,7 +84,7 @@ jobs:
       - name: Setup (Elixir)
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 22
+          otp-version: 23
           elixir-version: '1.11'
 
       - name: Cache
@@ -116,7 +116,7 @@ jobs:
       - name: Setup (Elixir)
         uses: erlef/setup-beam@v1
         with:
-          otp-version: 22
+          otp-version: 23
           elixir-version: '1.11'
 
       - name: Cache
