@@ -1,5 +1,7 @@
 import Config
 
-config :logger, level: :info
+config :logger,
+  backends: [LoggerJSON],
+  level: :info
 
-config :appsignal, :config, active: true
+config :warehouse, Warehouse.Tracer, disabled?: false

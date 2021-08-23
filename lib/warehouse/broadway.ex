@@ -1,6 +1,6 @@
 defmodule Warehouse.Broadway do
   use Broadway
-  use Appsignal.Instrumentation.Decorators
+  use Spandex.Decorators
 
   require Logger
 
@@ -28,7 +28,7 @@ defmodule Warehouse.Broadway do
   end
 
   @impl true
-  @decorate transaction(:queue)
+  @decorate trace(service: :warehouse, type: :function)
   def handle_message(_, %Message{data: data} = message, _context) do
     bottle =
       data
@@ -37,9 +37,15 @@ defmodule Warehouse.Broadway do
 
     Bottle.RequestId.read(:queue, bottle)
 
-    notify_handler(bottle.resource)
+    with {:error, reason} <- notify_handler(bottle.resource) do
+      Logger.error(inspect(reason))
+    end
 
     message
+  rescue
+    e ->
+      Logger.error(inspect(e))
+      message
   end
 
   @impl true
@@ -53,17 +59,24 @@ defmodule Warehouse.Broadway do
   end
 
   defp notify_handler({:part_created, message}) do
+    Logger.metadata(part_id: message.part.id)
     Logger.info("Handling Part Created message")
     Inventory.create_part(message)
   end
 
   defp notify_handler({:part_updated, message}) do
+    Logger.metadata(part_id: message.new.id)
     Logger.info("Handling Part Updated message")
     Inventory.update_part(message)
   end
 
   defp notify_handler({event, _message}) do
     Logger.warn("Ignoring #{event} message")
+    :ignored
+  end
+
+  defp notify_handler(message) do
+    Logger.error("Unable to handle unknown message", resource: inspect(message))
     :ignored
   end
 end

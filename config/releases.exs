@@ -26,6 +26,18 @@ config :warehouse,
        ssl_options: [verify: :verify_none]
      ]}
 
-config :appsignal, :config,
-  push_api_key: warehouse_config["APPSIGNAL_KEY"],
-  env: warehouse_config["ENVIRONMENT"]
+config :amqp,
+  connections: [
+    rabbitmq_conn: [
+      username: warehouse_config["RABBITMQ_USERNAME"],
+      password: warehouse_config["RABBITMQ_PASSWORD"],
+      host: warehouse_config["RABBITMQ_HOST"],
+      port: warehouse_config["RABBITMQ_PORT"],
+      ssl_options: [verify: :verify_none]
+    ]
+  ],
+  channels: [
+    events: [connection: :rabbitmq_conn]
+  ]
+
+config :warehouse, Warehouse.Tracer, env: warehouse_config["ENVIRONMENT"]

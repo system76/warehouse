@@ -9,6 +9,7 @@ defmodule Warehouse.Application do
 
   def start(_type, _args) do
     children = [
+      {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 2]},
       Warehouse.Repo,
       {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
       {Warehouse.Broadway, []}
