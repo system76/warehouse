@@ -1,4 +1,4 @@
-defmodule Warehouse.Server do
+defmodule WarehouseGRPC.Server do
   use GRPC.Server, service: Bottle.Inventory.V1.Service
 
   alias Warehouse.{Repo, Components, Schemas}

@@ -1,4 +1,4 @@
-defmodule Warehouse.Broadway do
+defmodule WarehouseBroadway.Broadway do
   use Broadway
   use Appsignal.Instrumentation.Decorators
 
@@ -36,7 +36,8 @@ defmodule Warehouse.Broadway do
 
     Bottle.RequestId.read(:queue, bottle)
 
-    with _ignored <- notify_handler(bottle.resource) do
+    with {:error, reason} <- WarehouseBroadway.Handlers.handle(bottle.resource) do
+      Logger.error(reason)
     end
 
     message
@@ -50,9 +51,5 @@ defmodule Warehouse.Broadway do
   @impl true
   def handle_failed([failed_message], _context) do
     [failed_message]
-  end
-
-  defp notify_handler(_resource) do
-    :ignored
   end
 end

@@ -7,6 +7,9 @@ defmodule Warehouse.Schemas.Part do
     belongs_to :location, Location
     belongs_to :sku, Sku
 
+    field :assembly_build_id, :integer
+    field :rma_description, :string
+
     timestamps()
   end
 end
