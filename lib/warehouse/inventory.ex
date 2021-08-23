@@ -20,8 +20,10 @@ defmodule Warehouse.Inventory do
 
   defp applicable_components(%{sku: %{id: sku_id}}) do
     query =
-      from c in Schemas.Component,
-        where: c.sku == ^sku_id
+      from c in Schemas.Configuration,
+        join: com in assoc(c, :component),
+        where: c.sku_id == ^sku_id,
+        preload: [component: com]
 
     Repo.all(query)
   end
@@ -32,7 +34,7 @@ defmodule Warehouse.Inventory do
     |> Enum.each(&broadcast_availability_change/1)
   end
 
-  defp broadcast_availability_change(component) do
+  defp broadcast_availability_change(%{component: component}) do
     component_id = to_string(component.id)
     number_available = Components.number_available(component)
 
