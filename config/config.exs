@@ -5,7 +5,25 @@ config :warehouse,
   ecto_repos: [Warehouse.Repo]
 
 config :warehouse,
-  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []}
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
+  exluded_picking_locations: [
+    # shipping
+    208,
+    # transit-1
+    237,
+    # shipped
+    242,
+    # lab
+    243,
+    # unknown
+    265,
+    # R&D 1
+    399,
+    # rma
+    400,
+    # sarah's desk
+    401
+  ]
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
