@@ -6,16 +6,16 @@ defmodule Warehouse.Server do
   import Ecto.Query
 
   alias Warehouse.{Repo, Components, Schemas}
-  alias Bottle.Inventory.V1.{Component, ComponentAvailabilityListRequest, ComponentAvailabilityListResponse}
+  alias Bottle.Inventory.V1.ListComponentAvailabilityResponse
   alias GRPC.Server
 
-  @spec component_availability_list(ComponentAvailabilityListRequest.t(), GRPC.Server.Stream.t()) :: any()
-  def component_availability_list(%{components: components}, stream) do
+  @spec list_component_availability(ListComponentAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: any()
+  def list_component_availability(%{components: components}, stream) do
     component_ids = Enum.map(components, & &1.id)
 
     query =
       from c in Schemas.Component,
-        where: c.removed == 0,
+        where: c.removed == false,
         where: c.id in ^component_ids
 
     Repo.transaction(
@@ -32,14 +32,15 @@ defmodule Warehouse.Server do
 
   defp calculate_component_availability(%Schemas.Component{} = component) do
     component_id = to_string(component.id)
-    number_available = Components.number_available(component)
+    %{available: number_available, options: options} = Components.number_available(component)
 
-    Logger.info("Component #{component_id} has #{number_available} available")
+    Logger.info("Component #{component_id} has #{number_available} total available")
 
-    ComponentAvailabilityListResponse.new(
-      available: number_available,
-      component: Component.new(id: component_id),
-      request_id: Bottle.RequestId.write(:rpc)
+    ListComponentAvailabilityResponse.new(
+      total_available_quantity: number_available,
+      component: %{id: component_id},
+      request_id: Bottle.RequestId.write(:rpc),
+      picking_options: options
     )
   end
 end

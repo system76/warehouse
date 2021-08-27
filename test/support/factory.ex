@@ -9,8 +9,9 @@ defmodule Warehouse.Factory do
 
   def configuration_factory do
     %Configuration{
-      quantity: 1,
-      sku: build(:sku)
+      component: build(:component),
+      sku: build(:sku),
+      quantity: 1
     }
   end
 

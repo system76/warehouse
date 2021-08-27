@@ -4,7 +4,7 @@ defmodule Warehouse.Components do
   alias Warehouse.Repo
   alias Warehouse.Schemas.{Component, Configuration}
 
-  @spec number_available(Component.t()) :: integer
+  @spec number_available(Component.t()) :: %{available: integer, options: List.t()}
   def number_available(%Component{id: component_id}) do
     query =
       from c in Configuration,
@@ -18,10 +18,16 @@ defmodule Warehouse.Components do
         where: l.id not in ^excluded_picking_locations(),
         preload: [sku: {s, parts: {p, location: l}}]
 
-    query
-    |> Repo.all()
-    |> Enum.map(&configuration_available/1)
-    |> Enum.sum()
+    results = Repo.all(query)
+
+    options = Enum.map(results, &picking_options/1)
+
+    total =
+      results
+      |> Enum.map(&configuration_available/1)
+      |> Enum.sum()
+
+    %{available: total, options: options}
   end
 
   defp excluded_picking_locations() do
@@ -32,5 +38,31 @@ defmodule Warehouse.Components do
     parts
     |> length()
     |> div(quantity)
+  end
+
+  defp picking_options(%{sku: sku, quantity: needed_quantity}) do
+    locations =
+      sku.parts
+      |> Enum.group_by(& &1.location_id)
+      |> Enum.map(fn {_, parts} -> {length(parts), parts} end)
+      |> Enum.sort_by(fn {length, parts} -> length end)
+
+    %{
+      sku: %{
+        id: to_string(sku.id),
+        name: sku.sku
+      },
+      required_quantity_per_kit: needed_quantity,
+      available_locations:
+        Enum.map(locations, fn {quantity, parts} ->
+          %{
+            location: %{
+              id: to_string(hd(parts).location_id),
+              name: hd(parts).location.name
+            },
+            available_quantity: quantity
+          }
+        end)
+    }
   end
 end

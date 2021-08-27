@@ -8,6 +8,7 @@ defmodule Warehouse.MixProject do
       elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps(),
       releases: [
         warehouse: [
@@ -34,7 +35,7 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:amqp, "~> 2.0", override: true},
-      {:bottle, github: "system76/bottle", ref: "f66e8cc"},
+      {:bottle, github: "system76/bottle", ref: "6d7d170"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:credo, "~> 1.3", only: [:dev, :test]},
       {:decimal, "~> 1.9.0", override: true},
@@ -54,6 +55,20 @@ defmodule Warehouse.MixProject do
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},
       {:telemetry, "~> 0.4"}
+    ]
+  end
+
+  # Aliases are shortcuts or tasks specific to the current project.
+  # For example, to create, migrate and run the seeds file at once:
+  #
+  #     $ mix ecto.setup
+  #
+  # See the documentation for `Mix` for more info on aliases.
+  defp aliases do
+    [
+      "ecto.setup": ["ecto.create", "ecto.migrate"],
+      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["ecto.create --quiet", "ecto.migrate", "test"]
     ]
   end
 end

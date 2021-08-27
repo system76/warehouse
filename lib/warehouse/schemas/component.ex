@@ -6,6 +6,6 @@ defmodule Warehouse.Schemas.Component do
         }
 
   schema "components" do
-    field :removed, :integer
+    field :removed, :boolean
   end
 end

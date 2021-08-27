@@ -15,6 +15,8 @@ defmodule Warehouse.Schemas.Part do
   schema "inventory_parts" do
     field :uuid, :string
     field :serial_number, :string
+    field :assembly_build_id, :string
+    field :rma_description, :string
 
     belongs_to :location, Location
     belongs_to :sku, Sku
