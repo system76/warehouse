@@ -36,7 +36,7 @@ defmodule Warehouse.Inventory do
 
   defp broadcast_availability_change(%{component: component}) do
     component_id = to_string(component.id)
-    number_available = Components.number_available(component)
+    %{available: number_available} = Components.number_available(component)
 
     Logger.info("Component #{component_id} has #{number_available} available")
 
