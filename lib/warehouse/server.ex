@@ -34,8 +34,6 @@ defmodule Warehouse.Server do
     component_id = to_string(component.id)
     %{available: number_available, options: options} = Components.number_available(component)
 
-    Logger.info("Component #{component_id} has #{number_available} total available")
-
     ListComponentAvailabilityResponse.new(
       total_available_quantity: number_available,
       component: %{id: component_id},

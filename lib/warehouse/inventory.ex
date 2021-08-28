@@ -38,7 +38,7 @@ defmodule Warehouse.Inventory do
     component_id = to_string(component.id)
     %{available: number_available} = Components.number_available(component)
 
-    Logger.info("Component #{component_id} has #{number_available} available")
+    Logger.info("Component #{component_id} has #{number_available} total available")
 
     message =
       ComponentAvailabilityUpdated.new(
