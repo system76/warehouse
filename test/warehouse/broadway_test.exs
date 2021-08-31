@@ -11,8 +11,8 @@ defmodule Warehouse.BroadwayTest do
       message =
         Bottle.Assembly.V1.BuildPicked.new(
           build: %{id: to_string(build_id)},
-          location: %{id: to_string(location.id)},
-          parts: [%{id: to_string(new_part.id)}]
+          location: %{id: to_string(location.uuid)},
+          parts: [%{id: to_string(new_part.uuid)}]
         )
 
       Warehouse.Broadway.notify_handler({:build_picked, message})
@@ -23,14 +23,15 @@ defmodule Warehouse.BroadwayTest do
     test "updates list of parts" do
       parts = insert_list(8, :part)
       part_ids = Enum.map(parts, & &1.id)
+      part_uuids = Enum.map(parts, & &1.uuid)
       build_id = Ecto.UUID.generate()
       location = insert(:location, area: "assembly")
 
       message =
         Bottle.Assembly.V1.BuildPicked.new(
           build: %{id: to_string(build_id)},
-          location: %{id: to_string(location.id)},
-          parts: Enum.map(part_ids, &%{id: to_string(&1)})
+          location: %{id: to_string(location.uuid)},
+          parts: Enum.map(part_uuids, &%{id: to_string(&1)})
         )
 
       Warehouse.Broadway.notify_handler({:build_picked, message})

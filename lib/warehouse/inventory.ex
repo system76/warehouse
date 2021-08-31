@@ -19,8 +19,10 @@ defmodule Warehouse.Inventory do
     broadcast_component_availability_change(new)
   end
 
-  def pick_parts(parts, %{id: build_id}, %{id: location_id}) when is_list(parts) do
+  def pick_parts(parts, %{id: build_id}, %{id: location_uuid}) when is_list(parts) do
     part_uuids = Enum.map(parts, &Map.get(&1, :id))
+
+    location = Repo.get_by!(Schemas.Location, uuid: location_uuid)
 
     parts =
       Repo.all(
@@ -35,7 +37,7 @@ defmodule Warehouse.Inventory do
 
     update_multi =
       Enum.reduce(parts, update_multi, fn part, multi ->
-        Multi.update(multi, {:update_part, part.id}, pick_part_changeset(part, build_id, location_id))
+        Multi.update(multi, {:update_part, part.id}, pick_part_changeset(part, build_id, location.id))
       end)
 
     case Repo.transaction(update_multi) do
@@ -47,10 +49,12 @@ defmodule Warehouse.Inventory do
         :ok
 
       {:error, failed_operation, failed_value, _changes_so_far} ->
-        Logger.error("Unable to update parts", resource: %{
-          failed_operation: inspect(failed_operation),
-          failed_value: inspect(failed_value)
-        })
+        Logger.error("Unable to update parts",
+          resource: %{
+            failed_operation: inspect(failed_operation),
+            failed_value: inspect(failed_value)
+          }
+        )
 
         {:error, "Unable to update parts"}
     end
