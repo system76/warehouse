@@ -23,7 +23,7 @@ defmodule Warehouse.Repo.Migrations.CreateTables do
     end
 
     create table(:inventory_parts) do
-      add :uuid, :uuid
+      add :uuid, :string
       add :serial_number, :string
       add :assembly_build_id, :string
       add :rma_description, :string

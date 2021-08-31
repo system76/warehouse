@@ -13,7 +13,7 @@ defmodule Warehouse.Schemas.Part do
         }
 
   schema "inventory_parts" do
-    field :uuid, Ecto.UUID
+    field :uuid, :string
     field :serial_number, :string
     field :assembly_build_id, :string
     field :rma_description, :string
