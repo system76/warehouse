@@ -58,24 +58,30 @@ defmodule Warehouse.Broadway do
     [failed_message]
   end
 
-  defp notify_handler({:part_created, message}) do
+  def notify_handler({:build_picked, %{build: build, location: location, parts: parts}}) do
+    Logger.metadata(build_id: build.id)
+    Logger.info("Handling Build Picked message")
+    Inventory.pick_parts(parts, build, location)
+  end
+
+  def notify_handler({:part_created, message}) do
     Logger.metadata(part_id: message.part.id)
     Logger.info("Handling Part Created message")
     Inventory.create_part(message)
   end
 
-  defp notify_handler({:part_updated, message}) do
+  def notify_handler({:part_updated, message}) do
     Logger.metadata(part_id: message.new.id)
     Logger.info("Handling Part Updated message")
     Inventory.update_part(message)
   end
 
-  defp notify_handler({event, _message}) do
+  def notify_handler({event, _message}) do
     Logger.warn("Ignoring #{event} message")
     :ignored
   end
 
-  defp notify_handler(message) do
+  def notify_handler(message) do
     Logger.error("Unable to handle unknown message", resource: inspect(message))
     :ignored
   end

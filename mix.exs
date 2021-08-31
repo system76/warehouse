@@ -35,7 +35,7 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:amqp, "~> 2.0", override: true},
-      {:bottle, github: "system76/bottle", ref: "6d7d170"},
+      {:bottle, github: "system76/bottle", ref: "dad2cfe"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:credo, "~> 1.3", only: [:dev, :test]},
       {:decimal, "~> 1.9.0", override: true},

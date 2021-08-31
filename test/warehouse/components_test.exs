@@ -38,7 +38,6 @@ defmodule Warehouse.ComponentsTest do
       location_three_id = to_string(location_three.id)
 
       component = insert(:component)
-      component_id = to_string(component.id)
 
       %{sku: sku_one} = insert(:configuration, component: component, quantity: 2)
       sku_one_id = to_string(sku_one.id)

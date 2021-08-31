@@ -7,6 +7,7 @@ defmodule Warehouse.Inventory do
 
   import Ecto.Query
 
+  alias Ecto.Multi
   alias Warehouse.{Components, Repo, Schemas}
   alias Bottle.Inventory.V1.{Component, ComponentAvailabilityUpdated, PartCreated, PartUpdated}
 
@@ -16,6 +17,50 @@ defmodule Warehouse.Inventory do
 
   def update_part(%PartUpdated{new: new}) do
     broadcast_component_availability_change(new)
+  end
+
+  def pick_parts(parts, %{id: build_id}, %{id: location_id}) when is_list(parts) do
+    part_ids = Enum.map(parts, &Map.get(&1, :id))
+
+    parts =
+      Repo.all(
+        from p in Schemas.Part,
+          join: s in assoc(p, :sku),
+          where: p.id in ^part_ids,
+          preload: [sku: s]
+      )
+
+    update_multi =
+      Multi.update_all(Multi.new(), :remove_parts_from_build, parts_on_build(build_id), set: [assembly_build_id: nil])
+
+    update_multi =
+      Enum.reduce(parts, update_multi, fn part, multi ->
+        Multi.update(multi, {:account, part.id}, pick_part_changeset(part, build_id, location_id))
+      end)
+
+    case Repo.transaction(update_multi) do
+      {:ok, _changes} ->
+        parts
+        |> Enum.uniq_by(&Map.get(&1, :sku_id))
+        |> Enum.each(&broadcast_component_availability_change/1)
+
+        :ok
+
+      {:error, _failed_operation, _failed_value, _changes_so_far} ->
+        {:error, "Unable to update parts"}
+    end
+  end
+
+  defp parts_on_build(build_id) do
+    from p in Schemas.Part,
+      where: p.assembly_build_id == ^build_id
+  end
+
+  defp pick_part_changeset(part, build_id, location_id) do
+    Schemas.Part.changeset(part, %{
+      assembly_build_id: build_id,
+      location_id: location_id
+    })
   end
 
   defp applicable_components(%{sku: %{id: sku_id}}) do
