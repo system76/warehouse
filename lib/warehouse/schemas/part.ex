@@ -26,7 +26,7 @@ defmodule Warehouse.Schemas.Part do
 
   def changeset(part, attrs) do
     part
-    |> cast(attrs, [:location_id, :serial_number, :sku_id, :uuid])
+    |> cast(attrs, [:location_id, :serial_number, :assembly_build_id, :sku_id, :uuid])
     |> assoc_constraint(:sku)
     |> assoc_constraint(:location)
   end
