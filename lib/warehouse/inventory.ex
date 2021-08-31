@@ -31,7 +31,10 @@ defmodule Warehouse.Inventory do
       )
 
     update_multi =
-      Enum.reduce(parts, Multi.new(), fn part, multi ->
+      Multi.update_all(Multi.new(), :remove_parts_from_build, parts_on_build(build_id), set: [assembly_build_id: nil])
+
+    update_multi =
+      Enum.reduce(parts, update_multi, fn part, multi ->
         Multi.update(multi, {:account, part.id}, pick_part_changeset(part, build_id, location_id))
       end)
 
@@ -46,6 +49,11 @@ defmodule Warehouse.Inventory do
       {:error, _failed_operation, _failed_value, _changes_so_far} ->
         {:error, "Unable to update parts"}
     end
+  end
+
+  defp parts_on_build(build_id) do
+    from p in Schemas.Part,
+      where: p.assembly_build_id == ^build_id
   end
 
   defp pick_part_changeset(part, build_id, location_id) do
