@@ -20,13 +20,13 @@ defmodule Warehouse.Inventory do
   end
 
   def pick_parts(parts, %{id: build_id}, %{id: location_id}) when is_list(parts) do
-    part_ids = Enum.map(parts, &Map.get(&1, :id))
+    part_uuids = Enum.map(parts, &Map.get(&1, :id))
 
     parts =
       Repo.all(
         from p in Schemas.Part,
           join: s in assoc(p, :sku),
-          where: p.id in ^part_ids,
+          where: p.uuid in ^part_uuids,
           preload: [sku: s]
       )
 
