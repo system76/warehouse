@@ -62,13 +62,13 @@ defmodule Warehouse.Inventory do
 
   defp parts_on_build(build_id) do
     from p in Schemas.Part,
-      where: p.assembly_build_id == ^build_id
+      where: p.assembly_build_id == ^to_string(build_id)
   end
 
   defp pick_part_changeset(part, build_id, location_id) do
     Schemas.Part.changeset(part, %{
-      assembly_build_id: build_id,
-      location_id: location_id
+      assembly_build_id: to_string(build_id),
+      location_id: to_string(location_id)
     })
   end
 
