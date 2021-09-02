@@ -12,7 +12,7 @@ defmodule Warehouse.Components do
         join: p in assoc(s, :parts),
         join: l in assoc(p, :location),
         where: c.component_id == ^component_id,
-        where: is_nil(p.assembly_build_id),
+        # where: is_nil(p.assembly_build_id),
         where: is_nil(p.rma_description),
         where: l.area == :storage,
         where: l.id not in ^excluded_picking_locations(),
