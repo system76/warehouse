@@ -41,7 +41,9 @@ defmodule Warehouse.Inventory do
       end)
 
     case Repo.transaction(update_multi) do
-      {:ok, _changes} ->
+      {:ok, changes} ->
+        Enum.each(changes, &log_changes/1)
+
         parts
         |> Enum.uniq_by(&Map.get(&1, :sku_id))
         |> Enum.each(&broadcast_component_availability_change/1)
@@ -70,6 +72,19 @@ defmodule Warehouse.Inventory do
       assembly_build_id: to_string(build_id),
       location_id: to_string(location_id)
     })
+  end
+
+  defp log_changes({_transaction_key, response}) do
+    case response do
+      %Schemas.Part{} = part ->
+        Logger.info("Assigned Part to Build",
+          part_id: part.uuid,
+          build_id: part.assembly_build_id
+        )
+
+      _ ->
+        nil
+    end
   end
 
   defp applicable_components(%{sku: %{id: sku_id}}) do

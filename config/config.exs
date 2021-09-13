@@ -27,7 +27,7 @@ config :warehouse,
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id, :part_id, :trace_id, :span_id, :resource],
+  metadata: [:request_id, :part_id, :build_id, :trace_id, :span_id, :resource],
   level: :info
 
 config :logger_json, :backend,
