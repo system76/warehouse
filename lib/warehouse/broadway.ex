@@ -30,6 +30,8 @@ defmodule Warehouse.Broadway do
   @impl true
   @decorate trace(service: :warehouse, type: :function)
   def handle_message(_, %Message{data: data} = message, _context) do
+    Logger.reset_metadata()
+  
     bottle =
       data
       |> URI.decode()
