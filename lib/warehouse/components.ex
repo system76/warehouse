@@ -50,7 +50,8 @@ defmodule Warehouse.Components do
     %{
       sku: %{
         id: to_string(sku.id),
-        name: sku.sku
+        name: sku.sku,
+        description: sku.description
       },
       required_quantity_per_kit: needed_quantity,
       available_locations:
