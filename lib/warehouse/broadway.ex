@@ -31,7 +31,7 @@ defmodule Warehouse.Broadway do
   @decorate trace(service: :warehouse, type: :function)
   def handle_message(_, %Message{data: data} = message, _context) do
     Logger.reset_metadata()
-  
+
     bottle =
       data
       |> URI.decode()
@@ -46,7 +46,7 @@ defmodule Warehouse.Broadway do
     message
   rescue
     e ->
-      Logger.error(inspect(e))
+      Logger.error(Exception.format(:error, e, __STACKTRACE__))
       message
   end
 
