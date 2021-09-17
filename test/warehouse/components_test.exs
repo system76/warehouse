@@ -8,7 +8,7 @@ defmodule Warehouse.ComponentsTest do
 
       component = insert(:component)
 
-      %{sku: sku} = insert(:configuration, component: component, quantity: 2)
+      %{sku: sku} = insert(:kit, component: component, quantity: 2)
 
       insert_list(10, :part, sku: sku, location: storage_location)
       insert_list(200, :part, sku: sku, location: assembly_location)
@@ -20,8 +20,8 @@ defmodule Warehouse.ComponentsTest do
       location = insert(:location, area: "storage")
       component = insert(:component)
 
-      %{sku: sku_one} = insert(:configuration, component: component, quantity: 2)
-      %{sku: sku_two} = insert(:configuration, component: component, quantity: 4)
+      %{sku: sku_one} = insert(:kit, component: component, quantity: 2)
+      %{sku: sku_two} = insert(:kit, component: component, quantity: 4)
 
       insert_list(10, :part, sku: sku_one, location: location)
       insert_list(8, :part, sku: sku_two, location: location)
@@ -39,9 +39,9 @@ defmodule Warehouse.ComponentsTest do
 
       component = insert(:component)
 
-      %{sku: sku_one} = insert(:configuration, component: component, quantity: 2)
+      %{sku: sku_one} = insert(:kit, component: component, quantity: 2)
       sku_one_id = to_string(sku_one.id)
-      %{sku: sku_two} = insert(:configuration, component: component, quantity: 4)
+      %{sku: sku_two} = insert(:kit, component: component, quantity: 4)
       sku_two_id = to_string(sku_two.id)
 
       insert_list(10, :part, sku: sku_one, location: location_one)

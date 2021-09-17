@@ -2,12 +2,12 @@ defmodule Warehouse.Components do
   import Ecto.Query
 
   alias Warehouse.Repo
-  alias Warehouse.Schemas.{Component, Configuration}
+  alias Warehouse.Schemas.{Component, Kit}
 
   @spec number_available(Component.t()) :: %{available: integer, options: List.t()}
   def number_available(%Component{id: component_id}) do
     query =
-      from c in Configuration,
+      from c in Kit,
         join: s in assoc(c, :sku),
         join: p in assoc(s, :parts),
         join: l in assoc(p, :location),

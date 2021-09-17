@@ -16,9 +16,9 @@ defmodule Warehouse.ServerTest do
       component = insert(:component)
       component_id = to_string(component.id)
 
-      %{sku: sku_one} = insert(:configuration, component: component, quantity: 2)
+      %{sku: sku_one} = insert(:kit, component: component, quantity: 2)
       sku_one_id = to_string(sku_one.id)
-      %{sku: sku_two} = insert(:configuration, component: component, quantity: 4)
+      %{sku: sku_two} = insert(:kit, component: component, quantity: 4)
       sku_two_id = to_string(sku_two.id)
 
       insert_list(10, :part, sku: sku_one, location: location_one)

@@ -1,14 +1,14 @@
 defmodule Warehouse.Factory do
   use ExMachina.Ecto, repo: Warehouse.Repo
 
-  alias Warehouse.Schemas.{Component, Configuration, Location, Part, Sku}
+  alias Warehouse.Schemas.{Component, Kit, Location, Part, Sku}
 
   def component_factory do
     %Component{}
   end
 
-  def configuration_factory do
-    %Configuration{
+  def kit_factory do
+    %Kit{
       component: build(:component),
       sku: build(:sku),
       quantity: 1

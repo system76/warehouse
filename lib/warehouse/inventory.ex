@@ -89,7 +89,7 @@ defmodule Warehouse.Inventory do
 
   defp applicable_components(%{sku: %{id: sku_id}}) do
     query =
-      from c in Schemas.Configuration,
+      from c in Schemas.Kit,
         join: com in assoc(c, :component),
         where: c.sku_id == ^sku_id,
         preload: [component: com]
