@@ -4,30 +4,44 @@ defmodule Warehouse.Kit do
   calculating demand for skus in a kit, and updating kit information.
   """
 
-  import Ecto.Query
-
-  alias Warehouse.{Demand, Repo}
-  alias Warehouse.Schemas.{Component, Kit, Sku}
-
-  @type demand :: %{required(String.t()) => non_neg_integer()}
+  alias Warehouse.{Demand, Repo, Schemas, Sku}
 
   @doc """
-  Returns a map of skus in the kit, and the demand they have.
+  Returns a map of skus in the kit, and the amount of times that sku could be
+  picked.
 
   ## Examples
 
-      iex> kit_sku_demands([%Kit{sku: %{id: "A"}}, %Kit{sku: %{id: "B"}}])
-      %{"A" => 1, "B" => 0}
+      iex> kit_sku_availability([%Kit{sku: %{id: 1}}])
+      %{1 => 1ss}
 
   """
-  @spec kit_demands([Kit.t]) :: demand
-  def kit_demands(kits) when is_list(kits) do
+  @spec kit_sku_availability([Kit.t] | Kit.t) :: %{required(integer) => non_neg_integer()}
+  def kit_sku_availability(kits) when is_list(kits) do
     kits
-    |> Enum.map(&kit_demands/1)
-    |> Enum.reduce(&Demand.merge_demands/1)
+    |> Enum.map(&kit_sku_demands/1)
+    |> Map.merge()
   end
 
-  def kit_demands(%Kit{} = kit) do
+  @doc """
+  Returns a map of skus in the kit, and the amount of times that sku could be
+  picked.
 
+  ## Examples
+
+      iex> kit_sku_availability([%Kit{sku: %{id: 1}}])
+      %{1 => 1}
+
+  """
+  @spec kit_sku_availability([Kit.t] | Kit.t) :: %{required(integer) => non_neg_integer()}
+  def kit_sku_availability(kits) when is_list(kits) do
+    kits
+    |> Enum.map(&kit_sku_demands/1)
+    |> Map.merge()
+  end
+
+  def kit_sku_availability(%Kit{quantity: quantity, sku_id: sku_id}) do
+    sku = Sku.get_sku(sku_id)
+    Map.put(%{}, sku.id, floor(sku.available_quantity / quantity))
   end
 end

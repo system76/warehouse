@@ -2,9 +2,7 @@ import Config
 
 config :warehouse,
   env: Mix.env(),
-  ecto_repos: [Warehouse.Repo]
-
-config :warehouse,
+  ecto_repos: [Warehouse.Repo],
   producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
   exluded_picking_locations: [
     # shipping
@@ -23,7 +21,8 @@ config :warehouse,
     400,
     # sarah's desk
     401
-  ]
+  ],
+  warmup: Warehouse.Sku.warmup_skus/0
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

@@ -4,8 +4,7 @@ defmodule Warehouse.Demand do
   value that is calculated based on what assembly builds require.
   """
 
-  @type demand :: non_neg_integer()
-  @type demand_map :: %{required(String.t()) => demand()}
+  @type demand :: %{required(String.t()) => non_neg_integer()}
 
   @doc """
   Merges two demand maps. This is very similar to `Map.merge/2` except it sums
@@ -20,7 +19,7 @@ defmodule Warehouse.Demand do
       %{"A" => 1, "B" => 2, "C" => 3}
 
   """
-  @spec merge_demands(demand_map(), demand_map()) :: demand_map()
+  @spec merge_demands(demand(), demand()) :: demand()
   def merge_demands(one, two) do
     Enum.reduce(two, one, fn {sku, demand}, demand_map ->
       add_demand(demand_map, sku, demand)
@@ -39,6 +38,7 @@ defmodule Warehouse.Demand do
       %{"A" => 1}
 
   """
+  @spec add_demand(Map.t(), String.t(), non_neg_integer()) :: demand()
   def add_demand(map, sku, demand) do
     current = Map.get(map, sku, 0)
     Map.put(map, sku, current + demand)

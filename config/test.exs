@@ -1,7 +1,8 @@
 import Config
 
 config :warehouse,
-  producer: {Broadway.DummyProducer, []}
+  producer: {Broadway.DummyProducer, []},
+  warmup: fn -> :ok end
 
 config :warehouse, Warehouse.Repo,
   username: "root",
