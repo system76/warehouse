@@ -20,6 +20,11 @@ defmodule Warehouse.DataCase do
     end
 
     on_exit(fn ->
+      Warehouse.ComponentSupervisor
+      |> DynamicSupervisor.which_children()
+      |> Enum.map(fn {_, pid, _, _} -> pid end)
+      |> Enum.map(fn pid -> DynamicSupervisor.terminate_child(Warehouse.ComponentSupervisor, pid) end)
+
       Warehouse.SkuSupervisor
       |> DynamicSupervisor.which_children()
       |> Enum.map(fn {_, pid, _, _} -> pid end)

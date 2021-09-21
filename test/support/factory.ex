@@ -4,7 +4,9 @@ defmodule Warehouse.Factory do
   alias Warehouse.Schemas.{Component, Kit, Location, Part, Sku}
 
   def component_factory do
-    %Component{}
+    %Component{
+      removed: false
+    }
   end
 
   def kit_factory do
@@ -40,6 +42,12 @@ defmodule Warehouse.Factory do
   end
 
   def supervise(records) when is_list(records), do: Enum.map(records, &supervise/1)
+
+  def supervise(%Component{} = component) do
+    with {:ok, _pid} <- DynamicSupervisor.start_child(Warehouse.ComponentSupervisor, {Warehouse.GenServers.Component, component}) do
+      component
+    end
+  end
 
   def supervise(%Sku{} = sku) do
     with {:ok, _pid} <- DynamicSupervisor.start_child(Warehouse.SkuSupervisor, {Warehouse.GenServers.Sku, sku}) do
