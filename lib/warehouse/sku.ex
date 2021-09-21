@@ -5,7 +5,7 @@ defmodule Warehouse.Sku do
   processes.
   """
 
-  alias Warehouse.{GenServer, Schema}
+  alias Warehouse.{GenServers, Repo, Schemas}
 
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry
@@ -16,14 +16,15 @@ defmodule Warehouse.Sku do
   ## Examples
 
       iex> list_skus()
-      [%Schema.Sku{}, %Schema.Sku{}, %Schema.Sku{}]
+      [%Schemas.Sku{}, %Schemas.Sku{}, %Schemas.Sku{}]
 
   """
-  @spec list_skus() :: [Schema.Sku.t]
+  @spec list_skus() :: [Schemas.Sku.t()]
   def list_skus() do
     @supervisor
     |> DynamicSupervisor.which_children()
     |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_info) end)
+    |> Enum.into([])
   end
 
   @doc """
@@ -32,28 +33,28 @@ defmodule Warehouse.Sku do
   ## Examples
 
       iex> list_skus([1, 2, 3])
-      [%Schema.Sku{}, %Schema.Sku{}, %Schema.Sku{}]
+      [%Schemas.Sku{}, %Schemas.Sku{}, %Schemas.Sku{}]
 
   """
-  @spec list_skus([integer]) :: [Schema.Sku.t]
+  @spec list_skus([integer]) :: [Schemas.Sku.t()]
   def list_skus(filter) do
-    filter_ids = Enum.map(filter, &to_string/1)
-
-    @registry
-    |> Registry.select([{{:"$1", :"$2"}, [], [{{:"$1", :"$2"}}]}])
-    |> Enum.filter(fn {id, pid} -> id in filter_ids end)
-    |> Enum.map(fn {_id, pid} => GenServer.cal(pid, :get_info) end)
+    filter
+    |> Enum.map(&to_string/1)
+    |> Enum.flat_map(&Registry.lookup(@registry, &1))
+    |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info) end)
   end
 
   @doc """
-  Starts a `Warehouse.GenServer.Sku` instance for everything in the database.
+  Starts a `Warehouse.GenServers.Sku` instance for everything in the database.
   This is used on application startup.
   """
   @spec warmup_skus() :: :ok
   def warmup_skus() do
-    for sku <- Repo.all(Schema.Sku) do
-      {:ok, _pid} = DynamicSupervisor.start_child(@supervisor, {GenServer.Sku, sku})
+    for sku <- Repo.all(Schemas.Sku) do
+      {:ok, _pid} = DynamicSupervisor.start_child(@supervisor, {GenServers.Sku, sku})
     end
+
+    :ok
   end
 
   @doc """
@@ -61,43 +62,15 @@ defmodule Warehouse.Sku do
 
   ## Examples
 
-      iex> get_sku(1)
-      %Schema.Sku{}
+      iex> get_sku(id)
+      %Schemas.Sku{}
 
   """
-  @spec get_sku(integer) :: Schema.Sku.t
+  @spec get_sku(integer) :: Schemas.Sku.t()
   def get_sku(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{_, pid}] -> GenServer.call(pid, :get_info)
+      [{pid, _value}] -> GenServer.call(pid, :get_info)
       _ -> nil
     end
-  end
-
-  @doc """
-  Creates a new SKU.
-
-  ## Examples
-
-      iex> create_sku(%{})
-      %Schema.Sku{}
-
-  """
-  @spec create_sku(Map.t) :: Schema.Sku.t
-  def create_sku(attrs) do
-
-  end
-
-  @doc """
-  Updates a SKU with given attributes.
-
-  ## Examples
-
-      iex> update_sku(%Schema.Sku{}, %{})
-      %Schema.Sku{}
-
-  """
-  @spec update_sku(Schema.Sku.t, Map.t) :: {:ok, Schema.Sku.t} | {:error, Ecto.Changeset}
-  def update_sku(%Sku{} = sku, attrs) do
-
   end
 end

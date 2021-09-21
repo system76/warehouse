@@ -3,14 +3,12 @@ defmodule Warehouse.DataCase do
 
   using do
     quote do
-      alias Warehouse.Repo
-
-      import Ecto
-      import Ecto.Changeset
       import Ecto.Query
       import Warehouse.DataCase
-
       import Warehouse.Factory
+
+      alias Ecto.Changeset
+      alias Warehouse.Repo
     end
   end
 
@@ -20,6 +18,13 @@ defmodule Warehouse.DataCase do
     unless tags[:async] do
       Ecto.Adapters.SQL.Sandbox.mode(Warehouse.Repo, {:shared, self()})
     end
+
+    on_exit(fn ->
+      Warehouse.SkuSupervisor
+      |> DynamicSupervisor.which_children()
+      |> Enum.map(fn {_, pid, _, _} -> pid end)
+      |> Enum.map(fn pid -> DynamicSupervisor.terminate_child(Warehouse.SkuSupervisor, pid) end)
+    end)
 
     :ok
   end

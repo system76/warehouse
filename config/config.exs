@@ -22,7 +22,7 @@ config :warehouse,
     # sarah's desk
     401
   ],
-  warmup: Warehouse.Sku.warmup_skus/0
+  warmup: {Warehouse.Sku, :warmup_skus, []}
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

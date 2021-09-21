@@ -4,7 +4,7 @@ defmodule Warehouse.Components do
   alias Warehouse.Repo
   alias Warehouse.Schemas.{Component, Kit}
 
-  @spec number_available(Component.t()) :: %{available: integer, options: List.t()}
+  @spec number_available(Component.t()) :: %{available: integer, options: [map()]}
   def number_available(%Component{id: component_id}) do
     query =
       from c in Kit,
@@ -45,7 +45,7 @@ defmodule Warehouse.Components do
       sku.parts
       |> Enum.group_by(& &1.location_id)
       |> Enum.map(fn {_, parts} -> {length(parts), parts} end)
-      |> Enum.sort_by(fn {length, parts} -> length end)
+      |> Enum.sort_by(fn {length, _parts} -> length end)
 
     %{
       sku: %{

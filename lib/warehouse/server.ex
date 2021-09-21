@@ -6,7 +6,7 @@ defmodule Warehouse.Server do
   import Ecto.Query
 
   alias Warehouse.{Repo, Components, Schemas}
-  alias Bottle.Inventory.V1.ListComponentAvailabilityResponse
+  alias Bottle.Inventory.V1.{ListComponentAvailabilityRequest, ListComponentAvailabilityResponse}
   alias GRPC.Server
 
   @spec list_component_availability(ListComponentAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: any()

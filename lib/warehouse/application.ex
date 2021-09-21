@@ -8,20 +8,23 @@ defmodule Warehouse.Application do
   require Logger
 
   def start(_type, _args) do
-    children = [
-      {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 20]},
-      {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
-      {Registry, keys: :unique, name: Warehouse.SkuRegistry},
-      Warehouse.Repo,
-      {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
-      {Warehouse.Broadway, []}
-    ]
-    |> maybe_put(Warehouse.AssemblyServiceClient, Application.get_env(:warehouse, :assembly_service_url))
+    children =
+      [
+        {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 20]},
+        {Registry, keys: :unique, name: Warehouse.SkuRegistry},
+        {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
+        Warehouse.Repo,
+        {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
+        {Warehouse.Broadway, []}
+      ]
+      |> maybe_put(Warehouse.AssemblyServiceClient, Application.get_env(:warehouse, :assembly_service_url))
 
     Logger.info("Starting Warehouse")
 
-    with {:ok, pid} <- Supervisor.start_link(children, opts) do
-      warmup()
+    opts = [strategy: :one_for_one, name: Warehouse.Supervisor]
+
+    with {:ok, pid} <- Supervisor.start_link(children, opts),
+         :ok <- warmup() do
       {:ok, pid}
     end
   end

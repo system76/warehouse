@@ -38,4 +38,12 @@ defmodule Warehouse.Factory do
       sku: sequence(:sku, &"sku#{&1}")
     }
   end
+
+  def supervise(records) when is_list(records), do: Enum.map(records, &supervise/1)
+
+  def supervise(%Sku{} = sku) do
+    with {:ok, _pid} <- DynamicSupervisor.start_child(Warehouse.SkuSupervisor, {Warehouse.GenServers.Sku, sku}) do
+      sku
+    end
+  end
 end
