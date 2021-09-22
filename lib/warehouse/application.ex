@@ -11,6 +11,7 @@ defmodule Warehouse.Application do
     children =
       [
         {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 20]},
+        {Task.Supervisor, name: Warehouse.TaskSupervisor},
         {Registry, keys: :unique, name: Warehouse.ComponentRegistry},
         {DynamicSupervisor, name: Warehouse.ComponentSupervisor, strategy: :one_for_one},
         {Registry, keys: :unique, name: Warehouse.SkuRegistry},

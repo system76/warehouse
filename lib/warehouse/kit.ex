@@ -4,7 +4,25 @@ defmodule Warehouse.Kit do
   calculating demand for skus in a kit, and updating kit information.
   """
 
-  alias Warehouse.{AdditiveMap, Schemas, Sku}
+  import Ecto.Query
+
+  alias Warehouse.{AdditiveMap, Repo, Schemas, Sku}
+
+  @doc """
+  Returns a list of kits for a Component ID.
+
+  ## Examples
+
+      iex> get_component_kits("123")
+      [%Kit{}, %Kit{}]
+
+  """
+  @spec get_component_kits(String.t()) :: [Schemas.Kit.t()]
+  def get_component_kits(component_id) do
+    Schemas.Kit
+    |> where([k], k.component_id == ^component_id)
+    |> Repo.all()
+  end
 
   @doc """
   Returns a map of demands for every sku in the list of kits.
@@ -21,8 +39,8 @@ defmodule Warehouse.Kit do
 
     sku_demands =
       kits
-      |> Enum.map(&{&1.sku_id, 0})
-      |> Enum.into(%{})
+      |> Enum.map(&AdditiveMap.set(%{}, &1.sku_id, 0))
+      |> Enum.reduce(%{}, &AdditiveMap.merge/2)
 
     {sku_demands, remainder} =
       Enum.reduce_while(kits, {sku_demands, demand}, fn kit, {sku_demands, remainder} ->
@@ -58,7 +76,7 @@ defmodule Warehouse.Kit do
   end
 
   def kit_sku_availability(%Schemas.Kit{quantity: quantity, sku_id: sku_id}) do
-    sku = Sku.get_sku(sku_id)
-    AdditiveMap.add(%{}, sku.id, floor(sku.available_quantity / quantity))
+    %{available: available} = Sku.get_sku_quantity(sku_id)
+    AdditiveMap.add(%{}, sku_id, floor(available / quantity))
   end
 end

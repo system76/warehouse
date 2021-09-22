@@ -1,7 +1,19 @@
 defmodule Warehouse.ComponentTest do
   use Warehouse.DataCase
 
-  alias Warehouse.Component
+  alias Warehouse.{AdditiveMap, Component}
+
+  def demand_fixture(sku, kit_quantity, component_demand, parts_available) do
+    component = insert(:component)
+    insert(:kit, component: component, sku: sku, quantity: kit_quantity)
+    insert_list(parts_available, :part, sku: sku)
+
+    supervise(component)
+
+    with [{pid, _value}] <- Registry.lookup(Warehouse.ComponentRegistry, to_string(component.id)) do
+      GenServer.cast(pid, {:set_demand, component_demand})
+    end
+  end
 
   test "list_components/0 lists all components" do
     component = :component |> insert() |> supervise()
@@ -32,5 +44,14 @@ defmodule Warehouse.ComponentTest do
   test "get_component/1 returns nil if component doesn't exist or is not supervised" do
     component = build(:component)
     assert Component.get_component(component.id) == nil
+  end
+
+  test "get_sku_demands/0 returns an AdditiveMap of all sku demands" do
+    sku = :sku |> insert() |> supervise()
+    demand_fixture(sku, 2, 10, 10)
+    demand_fixture(sku, 4, 20, 20)
+
+    demand = Component.get_sku_demands()
+    assert AdditiveMap.get(demand, sku.id) == 100
   end
 end

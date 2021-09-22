@@ -5,7 +5,7 @@ defmodule Warehouse.Sku do
   processes.
   """
 
-  alias Warehouse.{GenServers, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, Component, GenServers, Repo, Schemas}
 
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry
@@ -72,5 +72,43 @@ defmodule Warehouse.Sku do
       [{pid, _value}] -> GenServer.call(pid, :get_info)
       _ -> nil
     end
+  end
+
+  @doc """
+  Grabs quantity information for a SKU.
+
+  ## Examples
+
+      iex> get_sku_quantity(id)
+      %Schemas.Sku.quantity()
+
+  """
+  @spec get_sku_quantity(integer) :: Schemas.Sku.quantity()
+  def get_sku_quantity(id) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.call(pid, :get_quantity)
+      _ -> %{available: 0, demand: 0, excess: 0}
+    end
+  end
+
+  @doc """
+  Grabs the SKU demands from all known Components, and updates the SKU
+  GenServers with new demand data.
+
+  ## Examples
+
+      iex> update_sku_demands()
+      :ok
+
+  """
+  def update_sku_demands() do
+    sku_demands = Component.get_sku_demands()
+
+    @registry
+    |> Registry.select([{{:"$1", :"$2", :_}, [], [{{:"$1", :"$2"}}]}])
+    |> Enum.each(fn {id, pid} ->
+      demand = AdditiveMap.get(sku_demands, id)
+      GenServer.cast(pid, {:update_demand, demand})
+    end)
   end
 end

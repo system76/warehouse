@@ -44,7 +44,8 @@ defmodule Warehouse.Factory do
   def supervise(records) when is_list(records), do: Enum.map(records, &supervise/1)
 
   def supervise(%Component{} = component) do
-    with {:ok, _pid} <- DynamicSupervisor.start_child(Warehouse.ComponentSupervisor, {Warehouse.GenServers.Component, component}) do
+    with {:ok, _pid} <-
+           DynamicSupervisor.start_child(Warehouse.ComponentSupervisor, {Warehouse.GenServers.Component, component}) do
       component
     end
   end

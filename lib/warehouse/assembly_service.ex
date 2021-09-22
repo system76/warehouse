@@ -9,9 +9,9 @@ defmodule Warehouse.AssemblyService do
   alias Bottle.Assembly.V1.{ListComponentDemandsRequest, Stub}
   alias Warehouse.AssemblyServiceClient
 
-  @spec request_component_demand() :: List.t() | Stream.t()
+  @spec request_component_demand() :: Enumerable.t()
   def request_component_demand() do
-    request = ListComponentDemandRequest.new(request_id: Bottle.RequestId.write(:queue))
+    request = ListComponentDemandsRequest.new(request_id: Bottle.RequestId.write(:queue))
 
     with {:ok, channel} <- AssemblyServiceClient.channel(),
          {:ok, stream} <- Stub.list_component_demands(channel, request) do

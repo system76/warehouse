@@ -7,11 +7,9 @@ defmodule Warehouse.GenServers.Sku do
 
   use GenServer, restart: :transient
 
-  import Ecto.Query
-
   require Logger
 
-  alias Warehouse.{Repo, Schemas}
+  alias Warehouse.{Part, Schemas}
 
   def start_link(%Schemas.Sku{} = sku) do
     GenServer.start_link(__MODULE__, sku, name: name(sku))
@@ -24,8 +22,15 @@ defmodule Warehouse.GenServers.Sku do
   def init(%Schemas.Sku{} = sku) do
     Logger.metadata(sku_id: sku.id)
 
-    Process.send_after(self(), :update_available_quantity, timeout())
-    {:ok, %{sku: sku}}
+    Process.send_after(self(), :update_available, Enum.random(0..60_000))
+
+    {:ok,
+     %{
+       available: 0,
+       demand: 0,
+       excess: 0,
+       sku: sku
+     }}
   end
 
   @impl true
@@ -34,20 +39,44 @@ defmodule Warehouse.GenServers.Sku do
   end
 
   @impl true
-  def handle_info(:update_available_quantity, %{sku: %{id: sku_id}} = state) do
-    query =
-      Schemas.Sku
-      |> where([s], s.id == ^sku_id)
-      |> Schemas.Sku.populate_available_quantity()
+  def handle_call(:get_quantity, _from, state) do
+    {:reply, Map.take(state, [:available, :demand, :excess]), state}
+  end
 
-    if database_sku = Repo.one(query) do
-      updated_sku = Map.put(database_sku, :current_demand, state.sku.current_demand)
-
-      Logger.info("Updating available quantity to #{updated_sku.available_quantity}")
-      Process.send_after(self(), :update_available_quantity, timeout())
-      {:noreply, %{sku: updated_sku}}
+  @impl true
+  def handle_cast({:update_demand, demand}, %{demand: current_demand} = state) do
+    if demand != current_demand do
+      Logger.debug("Updating demand quantity to #{demand}")
+      Process.send_after(self(), :update_excess, 0)
+      {:noreply, %{state | demand: demand}}
     else
-      # This can happen if some external service deletes the SKU (mostly tests)
+      {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_info(:update_available, %{sku: %{id: sku_id}} = state) do
+    new_available = Part.get_pickable_quantity_for_sku(sku_id)
+
+    if new_available != state.available do
+      Logger.debug("Updating available quantity to #{new_available}")
+      Process.send_after(self(), :update_excess, 0)
+      Process.send_after(self(), :update_available, timeout())
+      {:noreply, %{state | available: new_available}}
+    else
+      Process.send_after(self(), :update_available, timeout())
+      {:noreply, state}
+    end
+  end
+
+  @impl true
+  def handle_info(:update_excess, %{available: available, demand: demand} = state) do
+    new_excess = max(available - demand, 0)
+
+    if new_excess != state.excess do
+      Logger.debug("We now have #{new_excess} parts up for grabs")
+      {:noreply, %{state | excess: new_excess}}
+    else
       {:noreply, state}
     end
   end

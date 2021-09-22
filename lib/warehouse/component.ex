@@ -5,7 +5,7 @@ defmodule Warehouse.Component do
   and the `GenServer` processes.
   """
 
-  alias Warehouse.{GenServers, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, GenServers, Repo, Schemas}
 
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
@@ -72,5 +72,24 @@ defmodule Warehouse.Component do
       [{pid, _value}] -> GenServer.call(pid, :get_info)
       _ -> nil
     end
+  end
+
+  @doc """
+  Iterates over all components, fetches the demand of the kit skus, and merges
+  them together.
+
+  ## Examples
+
+      iex> get_sku_demands()
+      %{"A" => 4, "B" => 2, "C" => 0}
+
+  """
+  @spec get_sku_demands() :: AdditiveMap.t()
+  def get_sku_demands() do
+    @supervisor
+    |> DynamicSupervisor.which_children()
+    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_sku_demands) end)
+    |> Enum.into([])
+    |> Enum.reduce(%{}, &AdditiveMap.merge/2)
   end
 end

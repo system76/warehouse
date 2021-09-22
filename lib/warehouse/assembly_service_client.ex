@@ -35,13 +35,19 @@ defmodule Warehouse.AssemblyServiceClient do
   @impl true
   def handle_info({:gun_down, _, _, _, _}, _state) do
     Logger.debug("Warehouse.AssemblyServiceClient disconnected")
-    init(%{})
+
+    with {:ok, channel} <- init(%{}) do
+      {:noreply, channel}
+    end
   end
 
   @impl true
   def handle_info({:gun_up, _, _, _, _}, _state) do
     Logger.debug("Warehouse.AssemblyServiceClient connected")
-    init(%{})
+
+    with {:ok, channel} <- init(%{}) do
+      {:noreply, channel}
+    end
   end
 
   @impl true

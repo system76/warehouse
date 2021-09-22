@@ -77,7 +77,7 @@ defmodule Warehouse.Inventory do
   defp log_changes({_transaction_key, response}) do
     case response do
       %Schemas.Part{} = part ->
-        Logger.info("Assigned Part to Build",
+        Logger.debug("Assigned Part to Build",
           part_id: part.uuid,
           build_id: part.assembly_build_id
         )
@@ -107,7 +107,7 @@ defmodule Warehouse.Inventory do
     component_id = to_string(component.id)
     %{available: number_available} = Components.number_available(component)
 
-    Logger.info("Component #{component_id} has #{number_available} total available")
+    Logger.debug("Component has #{number_available} total available", component_id: component_id)
 
     message =
       ComponentAvailabilityUpdated.new(

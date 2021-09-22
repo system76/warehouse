@@ -12,7 +12,7 @@ defmodule Warehouse.KitTest do
       })
 
     with [{pid, _value}] <- Registry.lookup(Warehouse.SkuRegistry, to_string(sku_id)) do
-      send(pid, :update_available_quantity)
+      send(pid, :update_available)
     end
 
     parts
