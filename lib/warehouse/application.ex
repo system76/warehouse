@@ -29,15 +29,14 @@ defmodule Warehouse.Application do
 
     opts = [strategy: :one_for_one, name: Warehouse.Supervisor]
 
-    with {:ok, pid} <- Supervisor.start_link(children, opts),
-         :ok <- warmup() do
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, fn ->
+        :warehouse
+        |> Application.get_env(:warmup)
+        |> apply([])
+      end)
+
       {:ok, pid}
     end
-  end
-
-  defp warmup do
-    :warehouse
-    |> Application.get_env(:warmup)
-    |> apply([])
   end
 end
