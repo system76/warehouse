@@ -40,6 +40,11 @@ config :ex_aws,
   secret_access_key: nil,
   region: nil
 
+config :warehouse, Warehouse.AssemblyServiceClient,
+  enabled?: false,
+  url: "",
+  ssl: false
+
 config :warehouse, Warehouse.Tracer,
   service: :warehouse,
   adapter: SpandexDatadog.Adapter,

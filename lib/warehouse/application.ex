@@ -8,19 +8,22 @@ defmodule Warehouse.Application do
   require Logger
 
   def start(_type, _args) do
+    children = [
+      {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 20]},
+      {Task.Supervisor, name: Warehouse.TaskSupervisor},
+      {Registry, keys: :unique, name: Warehouse.ComponentRegistry},
+      {DynamicSupervisor, name: Warehouse.ComponentSupervisor, strategy: :one_for_one},
+      {Registry, keys: :unique, name: Warehouse.SkuRegistry},
+      {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
+      Warehouse.Repo,
+      {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
+      {Warehouse.Broadway, []}
+    ]
+
     children =
-      [
-        {SpandexDatadog.ApiServer, [http: HTTPoison, host: "127.0.0.1", batch_size: 20]},
-        {Task.Supervisor, name: Warehouse.TaskSupervisor},
-        {Registry, keys: :unique, name: Warehouse.ComponentRegistry},
-        {DynamicSupervisor, name: Warehouse.ComponentSupervisor, strategy: :one_for_one},
-        {Registry, keys: :unique, name: Warehouse.SkuRegistry},
-        {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
-        Warehouse.Repo,
-        {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
-        {Warehouse.Broadway, []}
-      ]
-      |> maybe_put(Warehouse.AssemblyServiceClient, Application.get_env(:warehouse, :assembly_service_url))
+      if Application.get_env(:warehouse, Warehouse.AssemblyServiceClient)[:enabled?],
+        do: children ++ [Warehouse.AssemblyServiceClient],
+        else: children
 
     Logger.info("Starting Warehouse")
 
@@ -37,8 +40,4 @@ defmodule Warehouse.Application do
     |> Application.get_env(:warmup)
     |> apply([])
   end
-
-  defp maybe_put(list, _value, false), do: list
-  defp maybe_put(list, _value, nil), do: list
-  defp maybe_put(list, value, _), do: list ++ [value]
 end
