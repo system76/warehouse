@@ -51,7 +51,7 @@ defmodule Warehouse.Component do
   @spec warmup_components() :: :ok
   def warmup_components() do
     for component <- Repo.all(Schemas.Component) do
-      {:ok, _pid} = DynamicSupervisor.start_child(@supervisor, {GenServers.Component, component})
+      DynamicSupervisor.start_child(@supervisor, {GenServers.Component, component})
     end
 
     :ok
@@ -91,5 +91,21 @@ defmodule Warehouse.Component do
     |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_sku_demands) end)
     |> Enum.into([])
     |> Enum.reduce(%{}, &AdditiveMap.merge/2)
+  end
+
+  @doc """
+  Sets the demand on a component.
+
+  ## Examples
+
+      iex> update_component_demand(id, 5)
+      :ok
+
+  """
+  def update_component_demand(id, demand) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.cast(pid, {:set_demand, demand})
+      _ -> :error
+    end
   end
 end

@@ -51,7 +51,7 @@ defmodule Warehouse.Sku do
   @spec warmup_skus() :: :ok
   def warmup_skus() do
     for sku <- Repo.all(Schemas.Sku) do
-      {:ok, _pid} = DynamicSupervisor.start_child(@supervisor, {GenServers.Sku, sku})
+      DynamicSupervisor.start_child(@supervisor, {GenServers.Sku, sku})
     end
 
     :ok

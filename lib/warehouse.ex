@@ -24,7 +24,9 @@ defmodule Warehouse do
   def warmup() do
     with :ok <- Warehouse.Component.warmup_components(),
          :ok <- Warehouse.Sku.warmup_skus() do
-      :ok
+      Warehouse.AssemblyService.request_component_demands()
+      |> Stream.map(fn %{component_id: id, demand_quantity: demand} -> [id, demand] end)
+      |> Stream.each(&apply(Warehouse.Component, :update_component_demand, &1))
     end
   end
 end

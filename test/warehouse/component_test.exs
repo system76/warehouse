@@ -10,9 +10,7 @@ defmodule Warehouse.ComponentTest do
 
     supervise(component)
 
-    with [{pid, _value}] <- Registry.lookup(Warehouse.ComponentRegistry, to_string(component.id)) do
-      GenServer.cast(pid, {:set_demand, component_demand})
-    end
+    Component.update_component_demand(component.id, component_demand)
   end
 
   test "list_components/0 lists all components" do
@@ -53,5 +51,10 @@ defmodule Warehouse.ComponentTest do
 
     demand = Component.get_sku_demands()
     assert AdditiveMap.get(demand, sku.id) == 100
+  end
+
+  test "update_component_demand/2 updates the component demand" do
+    component = :component |> insert() |> supervise()
+    assert :ok = Component.update_component_demand(component.id, 5)
   end
 end

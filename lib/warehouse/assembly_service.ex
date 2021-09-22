@@ -9,8 +9,8 @@ defmodule Warehouse.AssemblyService do
   alias Bottle.Assembly.V1.{ListComponentDemandsRequest, Stub}
   alias Warehouse.AssemblyServiceClient
 
-  @spec request_component_demand() :: Enumerable.t()
-  def request_component_demand() do
+  @spec request_component_demands() :: Enumerable.t()
+  def request_component_demands() do
     request = ListComponentDemandsRequest.new(request_id: Bottle.RequestId.write(:queue))
 
     with {:ok, channel} <- AssemblyServiceClient.channel(),
@@ -19,7 +19,7 @@ defmodule Warehouse.AssemblyService do
     else
       {:error, reason} ->
         Logger.error("Unable to get component demand from assembly service", resource: inspect(reason))
-        []
+        Stream.cycle([])
     end
   end
 end
