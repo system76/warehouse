@@ -22,7 +22,7 @@ defmodule Warehouse.GenServers.Sku do
   def init(%Schemas.Sku{} = sku) do
     Logger.metadata(sku_id: sku.id)
 
-    Process.send_after(self(), :update_available, 0)
+    Process.send_after(self(), :update_available, Enum.random(0..60_000))
 
     {:ok,
      %{

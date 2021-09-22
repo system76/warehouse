@@ -54,8 +54,11 @@ defmodule Warehouse.Kit do
       end)
 
     # TODO: This should take into account old, deprecated, and removed skus.
-    first_orderable_kit = hd(kits)
-    AdditiveMap.add(sku_demands, first_orderable_kit.sku_id, remainder * first_orderable_kit.quantity)
+    if first_orderable_kit = List.first(kits) do
+      AdditiveMap.add(sku_demands, first_orderable_kit.sku_id, remainder * first_orderable_kit.quantity)
+    else
+      sku_demands
+    end
   end
 
   @doc """
