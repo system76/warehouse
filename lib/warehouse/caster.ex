@@ -1,6 +1,6 @@
 defmodule Warehouse.Caster do
   @moduledoc """
-  Encapsulate the logic to cast from Schemass to Bottles and back
+  Encapsulate the logic to cast from Schemas to Bottles and back
   """
 
   alias Bottle.Inventory.V1.Part
