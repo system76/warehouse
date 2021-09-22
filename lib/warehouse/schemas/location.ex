@@ -14,7 +14,11 @@ defmodule Warehouse.Schemas.Location do
   schema "inventory_locations" do
     field :uuid, :string
     field :name, :string
-    field :area, Ecto.Enum, values: [:assembly, :receiving, :shipped, :shipping, :storage, :transit], default: :receiving
+
+    field :area, Ecto.Enum,
+      values: [:assembly, :receiving, :shipped, :shipping, :storage, :transit],
+      default: :receiving
+
     field :disabled, :boolean, default: false
     field :removed, :boolean, default: false
 
