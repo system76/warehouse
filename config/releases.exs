@@ -40,13 +40,6 @@ config :amqp,
     events: [connection: :rabbitmq_conn]
   ]
 
-config :logger,
-  level:
-    if(warehouse_config["ENVIRONMENT"] == "production",
-      do: :info,
-      else: :debug
-    )
-
 config :warehouse, Warehouse.AssemblyServiceClient,
   enabled?: true,
   url: warehouse_config["ASSEMBLY_SERVICE_URL"],

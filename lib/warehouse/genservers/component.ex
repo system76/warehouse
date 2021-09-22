@@ -51,6 +51,7 @@ defmodule Warehouse.GenServers.Component do
 
   @impl true
   def handle_cast({:set_demand, demand}, state) do
+    Logger.info("Updating demand quantity to #{demand}")
     sku_demands = Kit.kit_sku_demand(state.kits, demand)
 
     Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, Sku, :update_sku_demands, [])

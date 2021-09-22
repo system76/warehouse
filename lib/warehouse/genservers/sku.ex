@@ -22,7 +22,7 @@ defmodule Warehouse.GenServers.Sku do
   def init(%Schemas.Sku{} = sku) do
     Logger.metadata(sku_id: sku.id)
 
-    Process.send_after(self(), :update_available, Enum.random(0..60_000))
+    Process.send_after(self(), :update_available, 0)
 
     {:ok,
      %{
@@ -46,7 +46,7 @@ defmodule Warehouse.GenServers.Sku do
   @impl true
   def handle_cast({:update_demand, demand}, %{demand: current_demand} = state) do
     if demand != current_demand do
-      Logger.debug("Updating demand quantity to #{demand}")
+      Logger.info("Updating demand quantity to #{demand}")
       Process.send_after(self(), :update_excess, 0)
       {:noreply, %{state | demand: demand}}
     else
@@ -59,7 +59,7 @@ defmodule Warehouse.GenServers.Sku do
     new_available = Part.get_pickable_quantity_for_sku(sku_id)
 
     if new_available != state.available do
-      Logger.debug("Updating available quantity to #{new_available}")
+      Logger.info("Updating available quantity to #{new_available}")
       Process.send_after(self(), :update_excess, 0)
       Process.send_after(self(), :update_available, timeout())
       {:noreply, %{state | available: new_available}}
@@ -74,12 +74,12 @@ defmodule Warehouse.GenServers.Sku do
     new_excess = max(available - demand, 0)
 
     if new_excess != state.excess do
-      Logger.debug("We now have #{new_excess} parts up for grabs")
+      Logger.info("Updating excess quantity to #{new_excess}")
       {:noreply, %{state | excess: new_excess}}
     else
       {:noreply, state}
     end
   end
 
-  defp timeout(), do: 4 * 60 * 60 * 1000 + Enum.random(60_000..600_000)
+  defp timeout(), do: Enum.random(3_600_000..7_200_000)
 end
