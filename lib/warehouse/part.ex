@@ -122,7 +122,7 @@ defmodule Warehouse.Part do
   Returns the amount of available parts to pick for a given SKU. This equates to
   all parts that:
 
-  - Are in a storage area
+  - Are in a storage, transit, or receiving location
   - Do not have an RMA description
   - Are not in an excluded picking list (QA, a couple of desks, etc)
 
@@ -139,7 +139,7 @@ defmodule Warehouse.Part do
         join: l in assoc(p, :location),
         where: p.sku_id == ^sku_id,
         where: is_nil(p.rma_description),
-        where: l.area == :storage,
+        where: l.area in [:receiving, :transit, :storage],
         where: l.id not in ^excluded_picking_locations()
 
     Repo.aggregate(query, :count, :id)
@@ -165,7 +165,7 @@ defmodule Warehouse.Part do
         select: %{id: l.id, uuid: l.uuid, name: l.name, quantity: count(p.id)},
         where: p.sku_id == ^sku_id,
         where: is_nil(p.rma_description),
-        where: l.area == :storage,
+        where: l.area in [:receiving, :transit, :storage],
         where: l.id not in ^excluded_picking_locations(),
         group_by: l.id
 
