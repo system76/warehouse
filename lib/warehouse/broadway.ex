@@ -5,7 +5,7 @@ defmodule Warehouse.Broadway do
   require Logger
 
   alias Broadway.Message
-  alias Warehouse.{Part, Sku}
+  alias Warehouse.{Component, Part, Sku}
 
   def start_link(_opts) do
     producer_module = Application.fetch_env!(:warehouse, :producer)
@@ -64,6 +64,14 @@ defmodule Warehouse.Broadway do
 
     part_uuids = Enum.map(parts, &Map.get(&1, :id))
     Part.pick_parts(part_uuids, build.id, location.id)
+  end
+
+  def notify_handler({:component_demand_updated, %{component_id: component_id, quantity: quantity}}) do
+    Logger.metadata(component_id: component_id)
+
+    with :error <- Component.update_component_demand(component_id, quantity) do
+      Logger.warn("Unable to update component demand")
+    end
   end
 
   def notify_handler({:part_created, %{part: %{id: part_id, sku: %{id: sku_id}}}}) do
