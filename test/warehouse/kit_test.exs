@@ -1,9 +1,14 @@
 defmodule Warehouse.KitTest do
   use Warehouse.DataCase
 
-  alias Warehouse.{AdditiveMap, Kit}
+  import Mox
+
+  alias Warehouse.{AdditiveMap, Kit, Sku}
 
   def set_sku_stock(sku_id, level) do
+    stub(Warehouse.MockEvents, :broadcast_component_quantities, fn _, _ -> :ok end)
+    stub(Warehouse.MockEvents, :broadcast_sku_quantities, fn _, _ -> :ok end)
+
     parts =
       insert_list(level, :part, %{
         sku: nil,
@@ -26,55 +31,97 @@ defmodule Warehouse.KitTest do
     %{kit: kit, sku: sku}
   end
 
-  test "kit_sku_demand/1 gets the demand for each sku" do
-    %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(10, 2)
-    %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
+  describe "get_kit_picking_options/1" do
+    test "returns expected data structure" do
+      stub(Warehouse.MockEvents, :broadcast_sku_quantities, fn _, _ -> :ok end)
 
-    demand = Kit.kit_sku_demand([kit_one, kit_two], 25)
-    assert AdditiveMap.get(demand, sku_one_id) == 10
-    assert AdditiveMap.get(demand, sku_two_id) == 20
+      sku = :sku |> insert() |> supervise()
+      location = insert(:location, area: "storage")
+      kit = insert(:kit, sku: sku, quantity: 3)
+
+      insert_list(7, :part, sku: sku, location: location)
+
+      Sku.update_sku_availability(sku.id)
+
+      %{sku: sku_sku, description: sku_description} = sku
+      %{id: location_id, uuid: location_uuid, name: location_name} = location
+
+      assert %{
+               available_quantity: 2,
+               required_quantity: 1,
+               skus: [
+                 %{
+                   sku: ^sku_sku,
+                   description: ^sku_description,
+                   available_quantity: 7,
+                   required_quantity: 3,
+                   locations: [
+                     %{
+                       id: ^location_id,
+                       uuid: ^location_uuid,
+                       name: ^location_name,
+                       available_quantity: 7
+                     }
+                   ]
+                 }
+               ]
+             } = Kit.get_kit_picking_options(kit)
+    end
   end
 
-  test "kit_sku_demand/1 adds remaining demand to first sku" do
-    %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(6, 2)
-    %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
+  describe "kit_sku_demand/1" do
+    test "gets the demand for each sku" do
+      %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(10, 2)
+      %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
 
-    demand = Kit.kit_sku_demand([kit_one, kit_two], 25)
-    assert AdditiveMap.get(demand, sku_one_id) == 10
-    assert AdditiveMap.get(demand, sku_two_id) == 20
+      demand = Kit.kit_sku_demand([kit_one, kit_two], 25)
+      assert AdditiveMap.get(demand, sku_one_id) == 10
+      assert AdditiveMap.get(demand, sku_two_id) == 20
+    end
+
+    test "adds remaining demand to first sku" do
+      %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(6, 2)
+      %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
+
+      demand = Kit.kit_sku_demand([kit_one, kit_two], 25)
+      assert AdditiveMap.get(demand, sku_one_id) == 10
+      assert AdditiveMap.get(demand, sku_two_id) == 20
+    end
+
+    test "does not break on lower quantity than demand" do
+      %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(0)
+      %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(0)
+
+      demand = Kit.kit_sku_demand([kit_one, kit_two], 20)
+      assert AdditiveMap.get(demand, sku_one_id) == 20
+      assert AdditiveMap.get(demand, sku_two_id) == 0
+    end
+
+    test "add zero to all skus in kit list" do
+      %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(20)
+      %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(0)
+
+      demand = Kit.kit_sku_demand([kit_one, kit_two], 20)
+      assert AdditiveMap.get(demand, sku_one_id) == 20
+      assert AdditiveMap.get(demand, sku_two_id) == 0
+    end
   end
 
-  test "kit_sku_demand/1 does not break on lower quantity than demand" do
-    %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(0)
-    %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(0)
+  describe "kit_sku_availability/1" do
+    test "gets sku availability of list of skus" do
+      %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(10, 4)
+      %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
 
-    demand = Kit.kit_sku_demand([kit_one, kit_two], 20)
-    assert AdditiveMap.get(demand, sku_one_id) == 20
-    assert AdditiveMap.get(demand, sku_two_id) == 0
-  end
+      availability = Kit.kit_sku_availability([kit_one, kit_two])
+      assert AdditiveMap.get(availability, sku_one_id) == 2
+      assert AdditiveMap.get(availability, sku_two_id) == 20
+    end
 
-  test "kit_sku_demand/1 adds zero to all skus in kit list" do
-    %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(20)
-    %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(0)
+    test "gets sku availability of single kit" do
+      %{sku: %{id: sku_id}, kit: kit} = sku_stock_fixture(10, 2)
 
-    demand = Kit.kit_sku_demand([kit_one, kit_two], 20)
-    assert AdditiveMap.get(demand, sku_one_id) == 20
-    assert AdditiveMap.get(demand, sku_two_id) == 0
-  end
-
-  test "kit_sku_availability/1 gets sku availability of list of skus" do
-    %{sku: %{id: sku_one_id}, kit: kit_one} = sku_stock_fixture(10, 4)
-    %{sku: %{id: sku_two_id}, kit: kit_two} = sku_stock_fixture(20)
-
-    availability = Kit.kit_sku_availability([kit_one, kit_two])
-    assert AdditiveMap.get(availability, sku_one_id) == 2
-    assert AdditiveMap.get(availability, sku_two_id) == 20
-  end
-
-  test "kit_sku_availability/1 gets sku availability of single kit" do
-    %{sku: %{id: sku_id}, kit: kit} = sku_stock_fixture(10, 2)
-
-    availability = Kit.kit_sku_availability(kit)
-    assert AdditiveMap.get(availability, sku_id) == 5
+      availability = Kit.kit_sku_availability(kit)
+      assert AdditiveMap.get(availability, sku_id) == 5
+    end
   end
 end

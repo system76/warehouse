@@ -19,8 +19,9 @@ defmodule Warehouse.Factory do
 
   def location_factory do
     %Location{
-      area: :assembly,
       uuid: Ecto.UUID.generate(),
+      name: "Test",
+      area: :assembly,
       disabled: false,
       removed: false
     }

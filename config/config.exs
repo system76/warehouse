@@ -3,7 +3,7 @@ import Config
 config :warehouse,
   env: Mix.env(),
   ecto_repos: [Warehouse.Repo],
-  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
+  events: Warehouse.Events,
   exluded_picking_locations: [
     # shipping
     208,
@@ -22,6 +22,7 @@ config :warehouse,
     # sarah's desk
     401
   ],
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
   warmup: &Warehouse.warmup/0
 
 config :logger, :console,

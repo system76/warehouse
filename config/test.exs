@@ -1,6 +1,7 @@
 import Config
 
 config :warehouse,
+  events: Warehouse.MockEvents,
   producer: {Broadway.DummyProducer, []},
   warmup: fn -> :ok end
 

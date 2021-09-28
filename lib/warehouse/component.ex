@@ -5,7 +5,7 @@ defmodule Warehouse.Component do
   and the `GenServer` processes.
   """
 
-  alias Warehouse.{AdditiveMap, GenServers, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, GenServers, Kit, Repo, Schemas}
 
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
@@ -66,11 +66,47 @@ defmodule Warehouse.Component do
       %Schemas.Component{}
 
   """
-  @spec get_component(integer) :: Schemas.Component.t()
+  @spec get_component(integer) :: Schemas.Component.t() | nil
   def get_component(id) do
     case Registry.lookup(@registry, to_string(id)) do
       [{pid, _value}] -> GenServer.call(pid, :get_info)
       _ -> nil
+    end
+  end
+
+  @doc """
+  Gets the quantity available for a given component id. Will return 0 if we have
+  no information about the component, or the ID given is invalid.
+
+  ## Examples
+
+      iex> get_component_availability(id)
+      3
+
+  """
+  @spec get_component_availability(integer) :: non_neg_integer()
+  def get_component_availability(id) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.call(pid, :get_available)
+      _ -> 0
+    end
+  end
+
+  @doc """
+  Returns a list of picking options for a component. Note that this can return
+  options that do not have enough quantity to be picked.
+
+  ## Examples
+
+      iex> get_component_picking_options(id)
+      []
+
+  """
+  @spec get_component_picking_options(integer) :: [Kit.picking_option()]
+  def get_component_picking_options(id) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.call(pid, :get_picking_options)
+      _ -> []
     end
   end
 
@@ -94,6 +130,24 @@ defmodule Warehouse.Component do
   end
 
   @doc """
+  Iterates over all components, and evaluates the availability based on the kits
+  they have and sku availability numbers.
+
+  ## Examples
+
+      iex> update_component_availability()
+      :ok
+
+  """
+  @spec update_component_availability() :: :ok
+  def update_component_availability() do
+    @supervisor
+    |> DynamicSupervisor.which_children()
+    |> Stream.map(fn {_, pid, _type, _modules} -> send(pid, :update_available) end)
+    |> Stream.run()
+  end
+
+  @doc """
   Sets the demand on a component.
 
   ## Examples
@@ -102,9 +156,27 @@ defmodule Warehouse.Component do
       :ok
 
   """
+  @spec update_component_demand(integer(), integer()) :: :ok | :error
   def update_component_demand(id, demand) do
     case Registry.lookup(@registry, to_string(id)) do
       [{pid, _value}] -> GenServer.cast(pid, {:set_demand, demand})
+      _ -> :error
+    end
+  end
+
+  @doc """
+  Updates the component's kit data.
+
+  ## Examples
+
+      iex> update_component_kits(id, [%Warehouse.Schemas.Kit{}])
+      :ok
+
+  """
+  @spec update_component_kits(integer, [Schemas.Kit.t()]) :: :ok | :error
+  def update_component_kits(id, kits) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.cast(pid, {:set_kits, kits})
       _ -> :error
     end
   end

@@ -45,6 +45,12 @@ defmodule Warehouse.GenServers.Component do
   end
 
   @impl true
+  def handle_call(:get_picking_options, _from, state) do
+    options = Enum.map(state.kits, &Kit.get_kit_picking_options/1)
+    {:reply, options, state}
+  end
+
+  @impl true
   def handle_call(:get_sku_demands, _from, state) do
     {:reply, state.sku_demands, state}
   end
@@ -59,6 +65,25 @@ defmodule Warehouse.GenServers.Component do
   end
 
   @impl true
+  def handle_cast({:set_kits, kits}, state) do
+    Process.send_after(self(), :update_available, 0)
+    {:noreply, %{state | kits: kits}}
+  end
+
+  def handle_info(:update_available, state) do
+    new_available = Kit.get_kit_availability(state.kits)
+
+    if new_available != state.available do
+      Logger.info("Updating available quantity to #{new_available}")
+      new_state = %{state | available: new_available}
+      events_module().broadcast_component_quantities(state.component.id, new_state)
+      {:noreply, new_state}
+    else
+      {:noreply, state}
+    end
+  end
+
+  @impl true
   def handle_info({_ref, :ok}, state), do: {:noreply, state}
 
   @impl true
@@ -69,4 +94,6 @@ defmodule Warehouse.GenServers.Component do
 
   @impl true
   def handle_info({:DOWN, _ref, :process, _pid, _reason}, state), do: {:noreply, state}
+
+  defp events_module(), do: Application.get_env(:warehouse, :events)
 end

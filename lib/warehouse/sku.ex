@@ -10,6 +10,8 @@ defmodule Warehouse.Sku do
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry
 
+  @type id :: integer() | String.t()
+
   @doc """
   Lists all SKUs we know about.
 
@@ -36,7 +38,7 @@ defmodule Warehouse.Sku do
       [%Schemas.Sku{}, %Schemas.Sku{}, %Schemas.Sku{}]
 
   """
-  @spec list_skus([integer]) :: [Schemas.Sku.t()]
+  @spec list_skus([id()]) :: [Schemas.Sku.t()]
   def list_skus(filter) do
     filter
     |> Enum.map(&to_string/1)
@@ -66,11 +68,29 @@ defmodule Warehouse.Sku do
       %Schemas.Sku{}
 
   """
-  @spec get_sku(integer) :: Schemas.Sku.t()
+  @spec get_sku(id()) :: Schemas.Sku.t() | nil
   def get_sku(id) do
     case Registry.lookup(@registry, to_string(id)) do
       [{pid, _value}] -> GenServer.call(pid, :get_info)
       _ -> nil
+    end
+  end
+
+  @doc """
+  Returns a list of locations with pickable parts for a SKU. If the sku is
+  unknown, we return an empty list.
+
+  ## Examples
+
+      iex> get_sku_pickable_locations(id)
+      []
+
+  """
+  @spec get_sku_pickable_locations(id()) :: [Schemas.Location.quantity()]
+  def get_sku_pickable_locations(id) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> GenServer.call(pid, :get_pickable_locations)
+      _ -> []
     end
   end
 
@@ -83,11 +103,29 @@ defmodule Warehouse.Sku do
       %Schemas.Sku.quantity()
 
   """
-  @spec get_sku_quantity(integer) :: Schemas.Sku.quantity()
+  @spec get_sku_quantity(id()) :: Schemas.Sku.quantity()
   def get_sku_quantity(id) do
     case Registry.lookup(@registry, to_string(id)) do
       [{pid, _value}] -> GenServer.call(pid, :get_quantity)
       _ -> %{available: 0, demand: 0, excess: 0}
+    end
+  end
+
+  @doc """
+  Updates the sku availability by querying the database for all pickable parts.
+  Will emit appropriate events if any amount changes.
+
+  ## Examples
+
+      iex> update_sku_availability(id)
+      :ok
+
+  """
+  @spec update_sku_availability(id()) :: :ok
+  def update_sku_availability(id) do
+    case Registry.lookup(@registry, to_string(id)) do
+      [{pid, _value}] -> send(pid, :update_available)
+      _ -> :ok
     end
   end
 
@@ -101,6 +139,7 @@ defmodule Warehouse.Sku do
       :ok
 
   """
+  @spec update_sku_demands() :: :ok
   def update_sku_demands() do
     sku_demands = Component.get_sku_demands()
 

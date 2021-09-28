@@ -4,11 +4,20 @@ defmodule Warehouse.Schemas.Location do
   alias Warehouse.Schemas.Part
 
   @type t :: %__MODULE__{
+          id: integer(),
+          uuid: String.t(),
           name: String.t(),
           area: atom(),
           disabled: boolean(),
           removed: boolean(),
           parts: [Part.t()]
+        }
+
+  @type quantity :: %{
+          id: integer(),
+          uuid: String.t(),
+          name: String.t(),
+          quantity: non_neg_integer()
         }
 
   schema "inventory_locations" do

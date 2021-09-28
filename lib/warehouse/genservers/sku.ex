@@ -9,7 +9,7 @@ defmodule Warehouse.GenServers.Sku do
 
   require Logger
 
-  alias Warehouse.{Part, Schemas}
+  alias Warehouse.{Component, Part, Schemas}
 
   def start_link(%Schemas.Sku{} = sku) do
     GenServer.start_link(__MODULE__, sku, name: name(sku))
@@ -29,6 +29,7 @@ defmodule Warehouse.GenServers.Sku do
        available: 0,
        demand: 0,
        excess: 0,
+       pickable_locations: [],
        sku: sku
      }}
   end
@@ -44,11 +45,19 @@ defmodule Warehouse.GenServers.Sku do
   end
 
   @impl true
+  def handle_call(:get_pickable_locations, _from, state) do
+    {:reply, state.pickable_locations, state}
+  end
+
+  @impl true
   def handle_cast({:update_demand, demand}, %{demand: current_demand} = state) do
-    if demand != current_demand do
-      Logger.info("Updating demand quantity to #{demand}")
-      Process.send_after(self(), :update_excess, 0)
-      {:noreply, %{state | demand: demand}}
+    new_excess = max(state.available - demand, 0)
+
+    if demand != current_demand or new_excess != state.excess do
+      Logger.info("Updating demand quantity to #{demand} with #{new_excess} excess")
+      new_state = %{state | demand: demand, excess: new_excess}
+      events_module().broadcast_sku_quantities(state.sku.id, new_state)
+      {:noreply, new_state}
     else
       {:noreply, state}
     end
@@ -56,30 +65,34 @@ defmodule Warehouse.GenServers.Sku do
 
   @impl true
   def handle_info(:update_available, %{sku: %{id: sku_id}} = state) do
-    new_available = Part.get_pickable_quantity_for_sku(sku_id)
+    new_pickable_locations = Part.get_pickable_locations_for_sku(sku_id)
+    new_available = new_pickable_locations |> Enum.map(&Map.get(&1, :quantity)) |> Enum.sum()
+    new_excess = max(new_available - state.demand, 0)
 
-    if new_available != state.available do
-      Logger.info("Updating available quantity to #{new_available}")
-      Process.send_after(self(), :update_excess, 0)
-      Process.send_after(self(), :update_available, timeout())
-      {:noreply, %{state | available: new_available}}
+    Process.send_after(self(), :update_available, Enum.random(3_600_000..7_200_000))
+
+    if new_available != state.available or new_excess != state.excess do
+      Logger.info("Updating available quantity to #{new_available} with #{new_excess} excess")
+      new_state = %{state | available: new_available, excess: new_excess, pickable_locations: new_pickable_locations}
+      events_module().broadcast_sku_quantities(sku_id, new_state)
+      Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, Component, :update_component_availability, [])
+      {:noreply, new_state}
     else
-      Process.send_after(self(), :update_available, timeout())
       {:noreply, state}
     end
   end
 
   @impl true
-  def handle_info(:update_excess, %{available: available, demand: demand} = state) do
-    new_excess = max(available - demand, 0)
+  def handle_info({_ref, :ok}, state), do: {:noreply, state}
 
-    if new_excess != state.excess do
-      Logger.info("Updating excess quantity to #{new_excess}")
-      {:noreply, %{state | excess: new_excess}}
-    else
-      {:noreply, state}
-    end
+  @impl true
+  def handle_info({_ref, res}, state) do
+    Logger.warn("Error while updating component availability", resource: inspect(res))
+    {:noreply, state}
   end
 
-  defp timeout(), do: Enum.random(3_600_000..7_200_000)
+  @impl true
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state), do: {:noreply, state}
+
+  defp events_module(), do: Application.get_env(:warehouse, :events)
 end

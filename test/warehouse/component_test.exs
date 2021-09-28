@@ -1,6 +1,8 @@
 defmodule Warehouse.ComponentTest do
   use Warehouse.DataCase
 
+  import Mox
+
   alias Warehouse.{AdditiveMap, Component}
 
   def demand_fixture(sku, kit_quantity, component_demand, parts_available) do
@@ -45,6 +47,8 @@ defmodule Warehouse.ComponentTest do
   end
 
   test "get_sku_demands/0 returns an AdditiveMap of all sku demands" do
+    stub(Warehouse.MockEvents, :broadcast_sku_quantities, fn _, _ -> :ok end)
+
     sku = :sku |> insert() |> supervise()
     demand_fixture(sku, 2, 10, 10)
     demand_fixture(sku, 4, 20, 20)

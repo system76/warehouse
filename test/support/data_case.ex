@@ -4,11 +4,16 @@ defmodule Warehouse.DataCase do
   using do
     quote do
       import Ecto.Query
+      import Mox, only: [set_mox_from_context: 1]
       import Warehouse.DataCase
       import Warehouse.Factory
 
       alias Ecto.Changeset
       alias Warehouse.Repo
+
+      @moduletag capture_log: true
+
+      setup :set_mox_from_context
     end
   end
 
