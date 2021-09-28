@@ -3,42 +3,87 @@ defmodule Warehouse.Server do
 
   require Logger
 
-  import Ecto.Query
+  alias Warehouse.{Caster, Component, Schemas, Sku}
 
-  alias Warehouse.{Repo, Components, Schemas}
-  alias Bottle.Inventory.V1.ListComponentAvailabilityResponse
+  alias Bottle.Inventory.V1.{
+    ListComponentAvailabilityRequest,
+    ListComponentAvailabilityResponse,
+    ListSkuQuantityRequest,
+    ListSkuQuantityResponse,
+    ListSkuAvailabilityRequest,
+    ListSkuAvailabilityResponse,
+    GetSkuDetailsRequest,
+    GetSkuDetailsResponse
+  }
+
   alias GRPC.Server
 
   @spec list_component_availability(ListComponentAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: any()
   def list_component_availability(%{components: components}, stream) do
-    component_ids = Enum.map(components, & &1.id)
+    components
+    |> Enum.map(& &1.id)
+    |> Component.list_components()
+    |> Enum.map(fn component ->
+      availability = Component.get_component_availability(component.id)
+      picking_options = Component.get_component_picking_options(component.id)
 
-    query =
-      from c in Schemas.Component,
-        where: c.removed == false,
-        where: c.id in ^component_ids
-
-    Repo.transaction(
-      fn ->
-        query
-        |> Repo.stream()
-        |> Stream.map(&calculate_component_availability/1)
-        |> Stream.each(&Server.send_reply(stream, &1))
-        |> Stream.run()
-      end,
-      timeout: :infinity
-    )
+      ListComponentAvailabilityResponse.new(
+        total_available_quantity: availability,
+        component: component |> Map.from_struct() |> Map.put(:id, to_string(component.id)),
+        request_id: Bottle.RequestId.write(:rpc),
+        picking_options: Caster.cast_picking_options(picking_options)
+      )
+    end)
+    |> Enum.each(&Server.send_reply(stream, &1))
   end
 
-  defp calculate_component_availability(%Schemas.Component{} = component) do
-    component_id = to_string(component.id)
-    %{available: number_available, options: options} = Components.number_available(component)
+  @spec list_sku_quantity(ListSkuQuantityRequest.t(), GRPC.Server.Stream.t()) :: any()
+  def list_sku_quantity(_request, stream) do
+    Sku.list_skus()
+    |> Enum.map(fn sku ->
+      quantity = Sku.get_sku_quantity(sku.id)
 
-    ListComponentAvailabilityResponse.new(
-      total_available_quantity: number_available,
-      component: %{id: component_id},
-      request_id: Bottle.RequestId.write(:rpc),
-      picking_options: options
-    )
+      ListSkuQuantityResponse.new(
+        sku: Caster.cast(struct(Schemas.Sku, sku)),
+        request_id: Bottle.RequestId.write(:rpc),
+        available_quantity: quantity.available,
+        demand_quantity: quantity.demand,
+        excess_quantity: quantity.excess
+      )
+    end)
+    |> Enum.each(&Server.send_reply(stream, &1))
+  end
+
+  @spec list_sku_availability(ListSkuAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: ListSkuAvailabilityResponse.t()
+  def list_sku_availability(%{sku: %{id: sku_id}}, _stream) do
+    if sku = Sku.get_sku(sku_id) != nil do
+      locations = Sku.get_sku_pickable_locations(sku.id)
+      best_location = hd(locations)
+
+      ListSkuAvailabilityResponse.new(
+        sku: Caster.cast(struct(Schemas.Sku, sku)),
+        request_id: Bottle.RequestId.write(:rpc),
+        location: Caster.cast(struct(Schemas.Location, best_location))
+      )
+    else
+      raise GRPC.RPCError, status: :not_found
+    end
+  end
+
+  @spec get_sku_details(GetSkuDetailsRequest.t(), GRPC.Server.Stream.t()) :: GetSkuDetailsResponse.t()
+  def get_sku_details(%{sku: %{id: sku_id}}, _stream) do
+    if sku = Sku.get_sku(sku_id) != nil do
+      quantity = Sku.get_sku_quantity(sku.id)
+
+      GetSkuDetailsResponse.new(
+        sku: Caster.cast(struct(Schemas.Sku, sku)),
+        request_id: Bottle.RequestId.write(:rpc),
+        available_quantity: quantity.available,
+        demand_quantity: quantity.demand,
+        excess_quantity: quantity.excess
+      )
+    else
+      raise GRPC.RPCError, status: :not_found
+    end
   end
 end

@@ -35,13 +35,12 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:amqp, "~> 2.0", override: true},
-      {:bottle, github: "system76/bottle", ref: "d2cd0e6"},
+      {:bottle, github: "system76/bottle", ref: "62b2704"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:credo, "~> 1.3", only: [:dev, :test]},
       {:decimal, "~> 1.9.0", override: true},
       {:decorator, "~> 1.2"},
       {:dialyxir, "~> 1.0", only: [:dev, :test], runtime: false},
-      {:ecto_enum, "~> 1.4"},
       {:ecto_sql, "~> 3.5"},
       {:ex_aws_sqs, "~> 3.2"},
       {:ex_aws, "~> 2.1.6"},
@@ -50,6 +49,7 @@ defmodule Warehouse.MixProject do
       {:httpoison, "~> 1.8"},
       {:jason, "~> 1.2", override: true},
       {:logger_json, github: "Nebo15/logger_json", ref: "8e4290a"},
+      {:mox, "~> 1.0", only: :test},
       {:myxql, "~> 0.4.0"},
       {:saxy, "~> 1.1"},
       {:spandex_datadog, "~> 1.1"},

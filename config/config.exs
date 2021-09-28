@@ -2,10 +2,8 @@ import Config
 
 config :warehouse,
   env: Mix.env(),
-  ecto_repos: [Warehouse.Repo]
-
-config :warehouse,
-  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
+  ecto_repos: [Warehouse.Repo],
+  events: Warehouse.Events,
   exluded_picking_locations: [
     # shipping
     208,
@@ -23,11 +21,13 @@ config :warehouse,
     400,
     # sarah's desk
     401
-  ]
+  ],
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
+  warmup: &Warehouse.warmup/0
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id, :part_id, :build_id, :trace_id, :span_id, :resource],
+  metadata: [:request_id, :part_id, :build_id, :component_id, :sku_id, :trace_id, :span_id, :resource],
   level: :info
 
 config :logger_json, :backend,
@@ -40,6 +40,11 @@ config :ex_aws,
   access_key_id: nil,
   secret_access_key: nil,
   region: nil
+
+config :warehouse, Warehouse.AssemblyServiceClient,
+  enabled?: false,
+  url: "",
+  ssl: false
 
 config :warehouse, Warehouse.Tracer,
   service: :warehouse,

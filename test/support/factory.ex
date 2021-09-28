@@ -1,14 +1,16 @@
 defmodule Warehouse.Factory do
   use ExMachina.Ecto, repo: Warehouse.Repo
 
-  alias Warehouse.Schemas.{Component, Configuration, Location, Part, Sku}
+  alias Warehouse.Schemas.{Component, Kit, Location, Part, Sku}
 
   def component_factory do
-    %Component{}
+    %Component{
+      removed: false
+    }
   end
 
-  def configuration_factory do
-    %Configuration{
+  def kit_factory do
+    %Kit{
       component: build(:component),
       sku: build(:sku),
       quantity: 1
@@ -17,8 +19,9 @@ defmodule Warehouse.Factory do
 
   def location_factory do
     %Location{
-      area: :assembly,
       uuid: Ecto.UUID.generate(),
+      name: "Test",
+      area: :assembly,
       disabled: false,
       removed: false
     }
@@ -37,5 +40,20 @@ defmodule Warehouse.Factory do
       removed: false,
       sku: sequence(:sku, &"sku#{&1}")
     }
+  end
+
+  def supervise(records) when is_list(records), do: Enum.map(records, &supervise/1)
+
+  def supervise(%Component{} = component) do
+    with {:ok, _pid} <-
+           DynamicSupervisor.start_child(Warehouse.ComponentSupervisor, {Warehouse.GenServers.Component, component}) do
+      component
+    end
+  end
+
+  def supervise(%Sku{} = sku) do
+    with {:ok, _pid} <- DynamicSupervisor.start_child(Warehouse.SkuSupervisor, {Warehouse.GenServers.Sku, sku}) do
+      sku
+    end
   end
 end

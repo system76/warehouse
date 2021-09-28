@@ -1,3 +1,3 @@
 defmodule WarehouseTest do
-  use ExUnit.Case
+  use Warehouse.DataCase
 end

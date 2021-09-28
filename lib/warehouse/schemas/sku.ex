@@ -4,16 +4,26 @@ defmodule Warehouse.Schemas.Sku do
   alias Warehouse.Schemas.Part
 
   @type t :: %__MODULE__{
-          parts: [Part.t()],
-          removed: boolean(),
+          id: non_neg_integer(),
           sku: String.t(),
-          description: String.t()
+          description: String.t(),
+          removed: boolean(),
+          parts: [Part.t()],
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
+  @type quantity :: %{
+          available: non_neg_integer(),
+          demand: non_neg_integer(),
+          excess: non_neg_integer()
         }
 
   schema "inventory_skus" do
-    field :removed, :boolean, default: false
     field :sku, :string
     field :description, :string
+
+    field :removed, :boolean, default: false
 
     has_many :parts, Part
 

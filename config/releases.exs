@@ -40,4 +40,9 @@ config :amqp,
     events: [connection: :rabbitmq_conn]
   ]
 
+config :warehouse, Warehouse.AssemblyServiceClient,
+  enabled?: true,
+  url: warehouse_config["ASSEMBLY_SERVICE_URL"],
+  ssl: true
+
 config :warehouse, Warehouse.Tracer, env: warehouse_config["ENVIRONMENT"]

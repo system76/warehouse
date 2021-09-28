@@ -5,7 +5,7 @@ defmodule Warehouse.Broadway do
   require Logger
 
   alias Broadway.Message
-  alias Warehouse.Inventory
+  alias Warehouse.{Part, Sku}
 
   def start_link(_opts) do
     producer_module = Application.fetch_env!(:warehouse, :producer)
@@ -39,9 +39,7 @@ defmodule Warehouse.Broadway do
 
     Bottle.RequestId.read(:queue, bottle)
 
-    with {:error, reason} <- notify_handler(bottle.resource) do
-      Logger.error(inspect(reason))
-    end
+    notify_handler(bottle.resource)
 
     message
   rescue
@@ -63,23 +61,25 @@ defmodule Warehouse.Broadway do
   def notify_handler({:build_picked, %{build: build, location: location, parts: parts}}) do
     Logger.metadata(build_id: build.id)
     Logger.info("Handling Build Picked message")
-    Inventory.pick_parts(parts, build, location)
+
+    part_uuids = Enum.map(parts, &Map.get(&1, :id))
+    Part.pick_parts(part_uuids, build.id, location.id)
   end
 
-  def notify_handler({:part_created, message}) do
-    Logger.metadata(part_id: message.part.id)
+  def notify_handler({:part_created, %{part: %{id: part_id, sku: %{id: sku_id}}}}) do
+    Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Created message")
-    Inventory.create_part(message)
+    Sku.update_sku_availability(sku_id)
   end
 
-  def notify_handler({:part_updated, message}) do
-    Logger.metadata(part_id: message.new.id)
+  def notify_handler({:part_updated, %{new: %{id: part_id, sku: %{id: sku_id}}}}) do
+    Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Updated message")
-    Inventory.update_part(message)
+    Sku.update_sku_availability(sku_id)
   end
 
-  def notify_handler({event, _message}) do
-    Logger.warn("Ignoring #{event} message")
+  def notify_handler({event, message}) do
+    Logger.warn("Ignoring #{event} message", resource: inspect(message))
     :ignored
   end
 
