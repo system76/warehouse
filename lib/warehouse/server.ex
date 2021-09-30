@@ -29,7 +29,7 @@ defmodule Warehouse.Server do
 
       ListComponentAvailabilityResponse.new(
         total_available_quantity: availability,
-        component: component |> Map.from_struct() |> Map.put(:id, to_string(component.id)),
+        component: Caster.cast(component),
         request_id: Bottle.RequestId.write(:rpc),
         picking_options: Caster.cast_picking_options(picking_options)
       )
@@ -44,7 +44,7 @@ defmodule Warehouse.Server do
       quantity = Sku.get_sku_quantity(sku.id)
 
       ListSkuQuantityResponse.new(
-        sku: Caster.cast(struct(Schemas.Sku, sku)),
+        sku: Caster.cast(sku),
         request_id: Bottle.RequestId.write(:rpc),
         available_quantity: quantity.available,
         demand_quantity: quantity.demand,
@@ -56,34 +56,38 @@ defmodule Warehouse.Server do
 
   @spec list_sku_availability(ListSkuAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: ListSkuAvailabilityResponse.t()
   def list_sku_availability(%{sku: %{id: sku_id}}, _stream) do
-    if sku = Sku.get_sku(sku_id) != nil do
-      locations = Sku.get_sku_pickable_locations(sku.id)
-      best_location = hd(locations)
+    case Sku.get_sku(sku_id) do
+      nil ->
+        raise GRPC.RPCError, status: :not_found
 
-      ListSkuAvailabilityResponse.new(
-        sku: Caster.cast(struct(Schemas.Sku, sku)),
-        request_id: Bottle.RequestId.write(:rpc),
-        location: Caster.cast(struct(Schemas.Location, best_location))
-      )
-    else
-      raise GRPC.RPCError, status: :not_found
+      sku ->
+        locations = Sku.get_sku_pickable_locations(sku.id)
+        best_location = hd(locations)
+
+        ListSkuAvailabilityResponse.new(
+          sku: Caster.cast(sku),
+          request_id: Bottle.RequestId.write(:rpc),
+          location: Caster.cast(struct(Schemas.Location, best_location))
+        )
     end
   end
 
   @spec get_sku_details(GetSkuDetailsRequest.t(), GRPC.Server.Stream.t()) :: GetSkuDetailsResponse.t()
   def get_sku_details(%{sku: %{id: sku_id}}, _stream) do
-    if sku = Sku.get_sku(sku_id) != nil do
-      quantity = Sku.get_sku_quantity(sku.id)
+    case Sku.get_sku(sku_id) do
+      nil ->
+        raise GRPC.RPCError, status: :not_found
 
-      GetSkuDetailsResponse.new(
-        sku: Caster.cast(struct(Schemas.Sku, sku)),
-        request_id: Bottle.RequestId.write(:rpc),
-        available_quantity: quantity.available,
-        demand_quantity: quantity.demand,
-        excess_quantity: quantity.excess
-      )
-    else
-      raise GRPC.RPCError, status: :not_found
+      sku ->
+        quantity = Sku.get_sku_quantity(sku.id)
+
+        GetSkuDetailsResponse.new(
+          sku: Caster.cast(sku),
+          request_id: Bottle.RequestId.write(:rpc),
+          available_quantity: quantity.available,
+          demand_quantity: quantity.demand,
+          excess_quantity: quantity.excess
+        )
     end
   end
 end

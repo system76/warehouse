@@ -4,7 +4,7 @@ defmodule Warehouse.Caster do
   and `Bottle`.
   """
 
-  alias Warehouse.Schemas.{Location, Sku}
+  alias Warehouse.Schemas.{Component, Location, Sku}
 
   def cast_picking_options(map, level \\ :root)
 
@@ -35,6 +35,12 @@ defmodule Warehouse.Caster do
     }
   end
 
+  @spec cast(Component.t()) :: Bottle.Inventory.V1.Component.t()
+  def cast(%Component{} = component) do
+    Bottle.Inventory.V1.Component.new(id: to_string(component.id))
+  end
+
+  @spec cast(Sku.t()) :: Bottle.Inventory.V1.Sku.t()
   def cast(%Sku{} = sku) do
     Bottle.Inventory.V1.Sku.new(
       id: to_string(sku.id),
@@ -43,6 +49,7 @@ defmodule Warehouse.Caster do
     )
   end
 
+  @spec cast(Location.t()) :: Bottle.Inventory.V1.Location.t()
   def cast(%Location{} = location) do
     Bottle.Inventory.V1.Location.new(
       id: to_string(location.uuid),
