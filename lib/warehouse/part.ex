@@ -77,14 +77,30 @@ defmodule Warehouse.Part do
     Multi.update_all(Multi.new(), :remove_parts, query, set: [assembly_build_id: nil])
   end
 
-  defp add_part_to_build(part, build_id, location_id) do
+  defp add_part_to_build(part, build_id, new_location_id) do
+    multi = Multi.new()
+
     changeset =
       Schemas.Part.changeset(part, %{
         assembly_build_id: to_string(build_id),
-        location_id: to_string(location_id)
+        location_id: to_string(new_location_id)
       })
 
-    Multi.update(Multi.new(), {:update_part, part.id}, changeset)
+    multi
+    |> Multi.update({:update_part, part.id}, changeset)
+    |> maybe_add_location_movement(part, new_location_id)
+  end
+
+  defp maybe_add_location_movement(multi, %Schemas.Part{location_id: location_id}, location_id), do: multi
+
+  defp maybe_add_location_movement(multi, %Schemas.Part{id: part_id, location_id: from_location_id}, to_location_id) do
+    Multi.insert(multi, {:location_change, part_id}, fn _ ->
+      %Schemas.Movement{
+        part_id: part_id,
+        from_location_id: from_location_id,
+        to_location_id: to_location_id
+      }
+    end)
   end
 
   defp report_pick_parts_effects({:ok, changes}) do
@@ -143,6 +159,16 @@ defmodule Warehouse.Part do
         where: l.id not in ^excluded_picking_locations()
 
     Repo.aggregate(query, :count, :id)
+  end
+
+  @spec get_movements_for_sku(String.t()) :: Schemas.Movement.t()
+  def get_movements_for_sku(sku_id) do
+    query =
+      from movement in Schemas.Movement,
+        join: part in assoc(movement, :part),
+        where: part.sku_id == ^sku_id
+
+    Repo.all(query)
   end
 
   @doc """

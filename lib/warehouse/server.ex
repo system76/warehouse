@@ -72,6 +72,11 @@ defmodule Warehouse.Server do
     end
   end
 
+  # @spec list_sku_movements(ListSkuAvailabilityRequest.t(), GRPC.Server.Stream.t()) :: ListSkuAvailabilityResponse.t()
+  # def list_sku_movements(_sku_id) do
+  # :ok
+  # end
+
   @spec get_sku_details(GetSkuDetailsRequest.t(), GRPC.Server.Stream.t()) :: GetSkuDetailsResponse.t()
   def get_sku_details(%{sku: %{id: sku_id}}, _stream) do
     case Sku.get_sku(sku_id) do
