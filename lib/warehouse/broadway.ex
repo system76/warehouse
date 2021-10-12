@@ -5,7 +5,7 @@ defmodule Warehouse.Broadway do
   require Logger
 
   alias Broadway.Message
-  alias Warehouse.{Component, Part, Sku}
+  alias Warehouse.{Component, Movements, Part, Sku}
 
   def start_link(_opts) do
     producer_module = Application.fetch_env!(:warehouse, :producer)
@@ -74,16 +74,25 @@ defmodule Warehouse.Broadway do
     end
   end
 
-  def notify_handler({:part_created, %{part: %{id: part_id, sku: %{id: sku_id}}}}) do
+  def notify_handler({:part_created, %{part: %{id: part_id, sku: %{id: sku_id}, location: %{id: location_id}}}}) do
     Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Created message")
-    Sku.update_sku_availability(sku_id)
+    :ok = Sku.update_sku_availability(sku_id)
+    Movements.insert(part_id, nil, location_id)
+    :ok
   end
 
-  def notify_handler({:part_updated, %{new: %{id: part_id, sku: %{id: sku_id}}}}) do
+  def notify_handler(
+        {:part_updated,
+         %{
+           old: %{location: %{id: from_location_id}},
+           new: %{id: part_id, sku: %{id: sku_id, location: %{id: to_location_id}}}
+         }}
+      ) do
     Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Updated message")
     Sku.update_sku_availability(sku_id)
+    Movements.insert(part_id, from_location_id, to_location_id)
   end
 
   def notify_handler({event, message}) do
