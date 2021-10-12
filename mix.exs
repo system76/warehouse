@@ -51,6 +51,7 @@ defmodule Warehouse.MixProject do
       {:logger_json, github: "Nebo15/logger_json", ref: "8e4290a"},
       {:mox, "~> 1.0", only: :test},
       {:myxql, "~> 0.4.0"},
+      {:plug, "~> 1.12.1"},
       {:saxy, "~> 1.1"},
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},
