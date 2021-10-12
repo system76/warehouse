@@ -1,8 +1,6 @@
 defmodule Warehouse.Repo.Migrations.AddInventoryMovements do
   use Ecto.Migration
 
-  @disable_ddl_transaction true
-  @disable_migration_lock true
   @table_name :inventory_movements
 
   def change do
