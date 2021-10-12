@@ -23,6 +23,13 @@ defmodule Warehouse.Movements do
     |> Repo.insert()
   end
 
+  @doc """
+  Gets part movements for a given sku.
+
+   ## Options
+    * `:preloads` - List of relationships to preload for a Movement. By default,
+      it does not preload any.
+  """
   @spec get_movements_for_sku(String.t(), [{:preloads, [atom()]}]) :: Movement.t()
   def get_movements_for_sku(sku_id, opts \\ []) do
     preloads = Keyword.get(opts, :preloads, [])
