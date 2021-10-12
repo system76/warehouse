@@ -6,7 +6,7 @@ defmodule Warehouse.ServerTest do
 
   alias Warehouse.{Component, Sku}
 
-  alias Bottle.Inventory.V1.{ListComponentAvailabilityRequest, Stub}
+  alias Bottle.Inventory.V1.{ListComponentAvailabilityRequest, ListSkuMovementsRequest, Stub}
 
   describe "list_component_availability/2" do
     test "streams a list of all needed picking information", %{channel: channel} do
@@ -96,6 +96,61 @@ defmodule Warehouse.ServerTest do
                  ]
                }
              ] = Enum.into(stream, [], fn {:ok, response} -> response end)
+    end
+  end
+
+  describe "list_sku_movements/2" do
+    test "streams a list of movements", %{channel: channel} do
+      part = insert(:part)
+      [location_one, location_two, location_three, location_four] = insert_list(4, :location, area: "storage")
+
+      movement_one = insert(:movement, part: part, from_location: location_one, to_location: location_two)
+      movement_two = insert(:movement, part: part, from_location: location_two, to_location: location_three)
+      movement_three = insert(:movement, part: part, from_location: location_three, to_location: location_four)
+
+      movement_id_one = to_string(movement_one.id)
+      movement_id_two = to_string(movement_two.id)
+      movement_id_three = to_string(movement_three.id)
+
+      supervise(part.sku)
+
+      {:ok, stream} =
+        Stub.list_sku_movements(
+          channel,
+          ListSkuMovementsRequest.new(sku: %{id: to_string(part.sku_id)})
+        )
+
+      assert [
+               %Bottle.Inventory.V1.ListSkuMovementsResponse{
+                 movements: [
+                   %Bottle.Inventory.V1.Movement{
+                     id: ^movement_id_one,
+                     from_location: %{id: _},
+                     inserted_at: _
+                   },
+                   %Bottle.Inventory.V1.Movement{
+                     id: ^movement_id_two,
+                     from_location: %{id: _},
+                     to_location: %{id: _},
+                     inserted_at: _
+                   },
+                   %Bottle.Inventory.V1.Movement{
+                     id: ^movement_id_three,
+                     from_location: %{id: _},
+                     to_location: %{id: _},
+                     inserted_at: _
+                   }
+                 ]
+               }
+             ] = Enum.into(stream, [], fn {:ok, response} -> response end)
+    end
+
+    test "errors if sku is not found", %{channel: channel} do
+      {:error, %GRPC.RPCError{message: "Some requested entity (e.g., file or directory) was not found", status: 5}} =
+        Stub.list_sku_movements(
+          channel,
+          ListSkuMovementsRequest.new(sku: %{id: "n0p3"})
+        )
     end
   end
 end
