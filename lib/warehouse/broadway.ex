@@ -77,22 +77,37 @@ defmodule Warehouse.Broadway do
   def notify_handler({:part_created, %{part: %{id: part_id, sku: %{id: sku_id}, location: %{id: location_id}}}}) do
     Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Created message")
-    :ok = Sku.update_sku_availability(sku_id)
-    Movements.insert(part_id, nil, location_id)
-    :ok
+
+    with :ok <- Sku.update_sku_availability(sku_id),
+         {:ok, _movement} <- Movements.insert(part_id, nil, location_id) do
+      :ok
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.warn("Unable to register part movement", changeset: inspect(changeset))
+    end
   end
 
   def notify_handler(
         {:part_updated,
          %{
            old: %{location: %{id: from_location_id}},
-           new: %{id: part_id, sku: %{id: sku_id, location: %{id: to_location_id}}}
+           new: %{id: part_id, sku: %{id: sku_id}, location: %{id: to_location_id}}
          }}
       ) do
     Logger.metadata(sku_id: sku_id, part_id: part_id)
     Logger.info("Handling Part Updated message")
-    Sku.update_sku_availability(sku_id)
-    Movements.insert(part_id, from_location_id, to_location_id)
+
+    with :ok <- Sku.update_sku_availability(sku_id),
+         false <- from_location_id == to_location_id,
+         {:ok, _movement} <- Movements.insert(part_id, from_location_id, to_location_id) do
+      :ok
+    else
+      {:error, %Ecto.Changeset{} = changeset} ->
+        Logger.warn("Unable to register part movement", changeset: inspect(changeset))
+
+      true ->
+        :ok
+    end
   end
 
   def notify_handler({event, message}) do

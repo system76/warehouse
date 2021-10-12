@@ -4,7 +4,7 @@ defmodule Warehouse.PartTest do
   import ExUnit.CaptureLog
   import Mox
 
-  alias Warehouse.{Part, Sku}
+  alias Warehouse.{Movements, Part, Sku}
 
   setup :verify_on_exit!
 
@@ -71,7 +71,7 @@ defmodule Warehouse.PartTest do
       assert [
                %{from_location_id: ^initial_location_id, to_location_id: ^new_location_id, part_id: ^part_id}
                | _
-             ] = Part.get_movements_for_sku(sku_id)
+             ] = Movements.get_movements_for_sku(sku_id)
     end
 
     test "doesn't create location movement if location remains the same" do
@@ -80,7 +80,7 @@ defmodule Warehouse.PartTest do
 
       Part.pick_parts([part_uuid], 423, initial_location.uuid)
 
-      assert [] = Part.get_movements_for_sku(sku_id)
+      assert [] = Movements.get_movements_for_sku(sku_id)
     end
 
     test "raises error if a part uuid is not found" do

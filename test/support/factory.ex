@@ -1,7 +1,7 @@
 defmodule Warehouse.Factory do
   use ExMachina.Ecto, repo: Warehouse.Repo
 
-  alias Warehouse.Schemas.{Component, Kit, Location, Part, Sku}
+  alias Warehouse.Schemas.{Component, Kit, Location, Movement, Part, Sku}
 
   def component_factory do
     %Component{
@@ -39,6 +39,14 @@ defmodule Warehouse.Factory do
     %Sku{
       removed: false,
       sku: sequence(:sku, &"sku#{&1}")
+    }
+  end
+
+  def movement_factory do
+    %Movement{
+      part: build(:part),
+      from_location: build(:location),
+      to_location: build(:location)
     }
   end
 

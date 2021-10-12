@@ -161,16 +161,6 @@ defmodule Warehouse.Part do
     Repo.aggregate(query, :count, :id)
   end
 
-  @spec get_movements_for_sku(String.t()) :: Schemas.Movement.t()
-  def get_movements_for_sku(sku_id) do
-    query =
-      from movement in Schemas.Movement,
-        join: part in assoc(movement, :part),
-        where: part.sku_id == ^sku_id
-
-    Repo.all(query)
-  end
-
   @doc """
   Returns a list of locations that have a pickable quantity of the sku
   available. This is similar to the above `get_pickable_quantity_for_sku/1` but
