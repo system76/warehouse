@@ -7,13 +7,11 @@ defmodule Warehouse.Repo.Migrations.AddInventoryMovements do
 
   def change do
     create table(@table_name) do
-      add :from_location_id, references(:inventory_locations), null: false
+      add :from_location_id, references(:inventory_locations), null: true
       add :to_location_id, references(:inventory_locations), null: false
       add :part_id, references(:inventory_parts), null: false
 
       timestamps(updated_at: false)
     end
-
-    create index(@table_name, [:part_id], concurrently: true)
   end
 end

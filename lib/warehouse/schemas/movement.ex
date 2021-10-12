@@ -12,8 +12,8 @@ defmodule Warehouse.Schemas.Movement do
           part: Part.t()
         }
 
-  @required_fields ~w(to_location part_id)a
-  @optional_fields ~w(from_location)a
+  @required_fields ~w(to_location_id part_id)a
+  @optional_fields ~w(from_location_id)a
   @fields @required_fields ++ @optional_fields
 
   schema "inventory_movements" do
@@ -28,7 +28,8 @@ defmodule Warehouse.Schemas.Movement do
     part
     |> cast(attrs, @fields)
     |> validate_required(@required_fields)
-    |> assoc_constraint(:sku)
-    |> assoc_constraint(:location)
+    |> assoc_constraint(:part)
+    |> assoc_constraint(:from_location)
+    |> assoc_constraint(:to_location)
   end
 end
