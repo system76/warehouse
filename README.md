@@ -93,6 +93,33 @@ First, make sure you are running the dependency services with `docker-compose`:
 docker-compose up
 ```
 
+Alternatively, services and required tools can be installed with [asdf](https://github.com/asdf-vm/asdf):
+
+```shell
+# Install required headers for MySQL
+sudo apt-get install unzip libtinfo5 libaio1
+
+# Install asdf plugins
+asdf plugin-add mysql
+asdf plugin-add grpcurl https://github.com/asdf-community/asdf-grpcurl.git
+asdf plugin add erlang https://github.com/asdf-vm/asdf-erlang.git
+asdf plugin-add elixir https://github.com/asdf-vm/asdf-elixir.git
+
+# Install required tool versions on this project directory
+asdf install
+
+# Setup MySQL
+mkdir -p $HOME/mysql_data
+mysql_install_db --datadir=$HOME/mysql_data
+mysql_secure_installation
+
+# Setup/Run MySQL Server
+mysqld -D --datadir=$HOME/mysql_data
+```
+
+Read more on [http://asdf-vm.com/](http://asdf-vm.com/) for usage information.
+
+
 Dependencies are managed via `mix`. In the repo, run:
 
 ```shell

@@ -4,7 +4,7 @@ defmodule Warehouse.PartTest do
   import ExUnit.CaptureLog
   import Mox
 
-  alias Warehouse.{Part, Sku}
+  alias Warehouse.{Movements, Part, Sku}
 
   setup :verify_on_exit!
 
@@ -82,6 +82,29 @@ defmodule Warehouse.PartTest do
 
       # Pretty ugly but we need to wait for the sku to process the message
       Process.sleep(1000)
+    end
+
+    test "creates location movement if location is changed" do
+      %{id: initial_location_id} = initial_location = insert(:location, area: "storage")
+      %{uuid: part_uuid, id: part_id, sku_id: sku_id} = insert(:part, location: initial_location)
+
+      %{id: new_location_id} = new_location = insert(:location, area: "assembly")
+
+      Part.pick_parts([part_uuid], 423, new_location.uuid)
+
+      assert [
+               %{from_location_id: ^initial_location_id, to_location_id: ^new_location_id, part_id: ^part_id}
+               | _
+             ] = Movements.get_movements_for_sku(sku_id)
+    end
+
+    test "doesn't create location movement if location remains the same" do
+      initial_location = insert(:location, area: "storage")
+      %{uuid: part_uuid, sku_id: sku_id} = insert(:part, location: initial_location)
+
+      Part.pick_parts([part_uuid], 423, initial_location.uuid)
+
+      assert [] = Movements.get_movements_for_sku(sku_id)
     end
 
     test "raises error if a part uuid is not found" do

@@ -22,7 +22,7 @@ defmodule Warehouse.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:eex, :logger],
       mod: {Warehouse.Application, []}
     ]
   end
@@ -35,7 +35,7 @@ defmodule Warehouse.MixProject do
   defp deps do
     [
       {:amqp, "~> 2.0", override: true},
-      {:bottle, github: "system76/bottle", ref: "62b2704"},
+      {:bottle, github: "codeadict/bottle", ref: "e35cd45"},
       {:broadway_rabbitmq, "~> 0.6.0"},
       {:credo, "~> 1.3", only: [:dev, :test]},
       {:decimal, "~> 1.9.0", override: true},
@@ -51,6 +51,7 @@ defmodule Warehouse.MixProject do
       {:logger_json, github: "Nebo15/logger_json", ref: "8e4290a"},
       {:mox, "~> 1.0", only: :test},
       {:myxql, "~> 0.4.0"},
+      {:plug, "~> 1.12.1"},
       {:saxy, "~> 1.1"},
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},

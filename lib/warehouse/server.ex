@@ -3,7 +3,7 @@ defmodule Warehouse.Server do
 
   require Logger
 
-  alias Warehouse.{Caster, Component, Schemas, Sku}
+  alias Warehouse.{Caster, Component, Movements, Schemas, Sku}
 
   alias Bottle.Inventory.V1.{
     ListComponentAvailabilityRequest,
@@ -12,6 +12,8 @@ defmodule Warehouse.Server do
     ListSkuQuantityResponse,
     ListSkuAvailabilityRequest,
     ListSkuAvailabilityResponse,
+    ListSkuMovementsRequest,
+    ListSkuMovementsResponse,
     GetSkuDetailsRequest,
     GetSkuDetailsResponse
   }
@@ -69,6 +71,28 @@ defmodule Warehouse.Server do
           request_id: Bottle.RequestId.write(:rpc),
           location: Caster.cast(struct(Schemas.Location, best_location))
         )
+    end
+  end
+
+  @spec list_sku_movements(ListSkuMovementsRequest.t(), GRPC.Server.Stream.t()) :: ListSkuMovementsResponse.t()
+  def list_sku_movements(%{sku: %{id: sku_id}}, stream) do
+    case Sku.get_sku(sku_id) do
+      nil ->
+        raise GRPC.RPCError, status: :not_found
+
+      sku ->
+        movements =
+          sku.id
+          |> Movements.get_movements_for_sku(preloads: [:part, :from_location, :to_location])
+          |> Enum.map(&Caster.cast(&1))
+
+        reply =
+          ListSkuMovementsResponse.new(
+            request_id: Bottle.RequestId.write(:rpc),
+            movements: movements
+          )
+
+        Server.send_reply(stream, reply)
     end
   end
 

@@ -4,7 +4,7 @@ defmodule Warehouse.Caster do
   and `Bottle`.
   """
 
-  alias Warehouse.Schemas.{Component, Location, Sku}
+  alias Warehouse.Schemas.{Component, Location, Movement, Part, Sku}
 
   def cast_picking_options(map, level \\ :root)
 
@@ -54,6 +54,26 @@ defmodule Warehouse.Caster do
     Bottle.Inventory.V1.Location.new(
       id: to_string(location.uuid),
       name: location.name
+    )
+  end
+
+  @spec cast(Movement.t()) :: Bottle.Inventory.V1.Movement.t()
+  def cast(%Movement{} = movement) do
+    Bottle.Inventory.V1.Movement.new(
+      id: to_string(movement.id),
+      part: cast_movement_part(movement.part),
+      from_location: if(is_nil(movement.from_location), do: nil, else: cast(movement.from_location)),
+      to_location: cast(movement.to_location),
+      inserted_at: NaiveDateTime.to_iso8601(movement.inserted_at)
+    )
+  end
+
+  @spec cast_movement_part(Part.t()) :: Bottle.Inventory.V1.Part.t()
+  defp cast_movement_part(%Part{} = part) do
+    Bottle.Inventory.V1.Part.new(
+      id: to_string(part.id),
+      serial_number: part.serial_number,
+      rma_description: part.rma_description
     )
   end
 end
