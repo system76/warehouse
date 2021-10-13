@@ -45,6 +45,30 @@ defmodule Warehouse.PartTest do
              end) =~ "Assigned Part to Build"
     end
 
+    test "weird part assigments result in correct part assignment" do
+      old_parts = 4 |> insert_list(:part, assembly_build_id: 888) |> Enum.map(& &1.uuid)
+      same_parts = 2 |> insert_list(:part, assembly_build_id: 888) |> Enum.map(& &1.uuid)
+      new_parts = 6 |> insert_list(:part) |> Enum.map(& &1.uuid)
+      location = insert(:location, area: "assembly")
+
+      assert :ok == Part.pick_parts(new_parts ++ same_parts, 888, location.uuid)
+
+      assert old_parts
+             |> Part.list_parts!()
+             |> Enum.map(& &1.assembly_build_id)
+             |> Enum.reject(&is_nil/1) == []
+
+      assert same_parts
+             |> Part.list_parts!()
+             |> Enum.map(& &1.assembly_build_id)
+             |> Enum.all?(&(&1 == 888))
+
+      assert new_parts
+             |> Part.list_parts!()
+             |> Enum.map(& &1.assembly_build_id)
+             |> Enum.all?(&(&1 == 888))
+    end
+
     test "updates the sku availability" do
       expect(Warehouse.MockEvents, :broadcast_sku_quantities, 2, fn _, _ -> :ok end)
 

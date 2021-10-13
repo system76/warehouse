@@ -64,15 +64,16 @@ defmodule Warehouse.Part do
     |> Enum.reduce(Multi.new(), fn part, multi ->
       Multi.append(multi, add_part_to_build(part, build_id, location.id))
     end)
-    |> Multi.prepend(remove_parts_from_build(build_id))
+    |> Multi.prepend(remove_parts_from_build(build_id, part_uuids))
     |> Repo.transaction()
     |> report_pick_parts_effects()
   end
 
-  defp remove_parts_from_build(build_id) do
+  defp remove_parts_from_build(build_id, excluded_uuids) do
     query =
       from p in Schemas.Part,
-        where: p.assembly_build_id == ^to_string(build_id)
+        where: p.assembly_build_id == ^to_string(build_id),
+        where: p.uuid not in ^excluded_uuids
 
     Multi.update_all(Multi.new(), :remove_parts, query, set: [assembly_build_id: nil])
   end
@@ -107,7 +108,7 @@ defmodule Warehouse.Part do
     :error
   end
 
-  defp report_pick_parts_effects({_transaction_key, %Schemas.Part{} = part}) do
+  defp report_pick_parts_effects({{:update_part, _}, %Schemas.Part{} = part}) do
     Logger.info("Assigned Part to Build",
       part_id: part.uuid,
       build_id: part.assembly_build_id
