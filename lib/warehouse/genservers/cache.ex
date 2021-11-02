@@ -35,7 +35,6 @@ defmodule Warehouse.GenServers.Cache do
 
   @impl GenServer
   def handle_continue(:warmup, [name] = state) do
-
     Component
     |> Repo.all()
     |> Enum.each(fn component ->
