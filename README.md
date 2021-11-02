@@ -85,7 +85,7 @@ configurations like memory. A pseudo example of this:
 %Sku{sku_id: 3, name: "Kingston 16 GB DDR4 at 3200 MHz"}
 ```
 
-## Setup
+## Development Setup
 
 First, make sure you are running the dependency services with `docker-compose`:
 
@@ -103,4 +103,12 @@ Then run this to test the project:
 
 ```shell
 mix test
+```
+
+### Contributing
+
+This project makes use of [https://pre-commit.com/](https://pre-commit.com/) to ensure code quality before pushing it to Git. While this is not a requirement, it's encouraged to have `pre-commit` installed with `pip install pre-commit`, and the in this project root, run:
+
+```shell
+pre-commit install
 ```
