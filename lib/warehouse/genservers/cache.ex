@@ -9,47 +9,52 @@ defmodule Warehouse.GenServers.Cache do
 
   require Logger
 
-  @spec start_link(atom()) :: :ignore | {:error, any} | {:ok, pid}
-  def start_link(name) when is_atom(name) do
-    GenServer.start_link(__MODULE__, [name])
+  @default_warmup_interval 60_000
+
+  @spec start_link(keyword()) :: :ignore | {:error, any} | {:ok, pid}
+  def start_link(opts) do
+    name = opts[:name] || __MODULE__
+    warmup_interval = opts[:warmup_interval] || @default_warmup_interval
+    table_name = opts[:table_name]
+    GenServer.start_link(__MODULE__, %{warmup_interval: warmup_interval, table_name: table_name}, name: name)
   end
 
-  def get(key) do
-    GenServer.call(__MODULE__, {:get, key})
+  def get(server \\ __MODULE__, key) do
+    GenServer.call(server, {:get, key})
   end
 
-  def put(key, data) do
-    GenServer.cast(__MODULE__, {:put, key, data})
+  def put(server \\ __MODULE__, key, data) do
+    GenServer.cast(server, {:put, key, data})
   end
 
   ## GenServer API
 
   @impl GenServer
-  def init([name] = state) do
-    Logger.info("Initializing cache #{name}")
+  def init(%{table_name: table_name} = state) do
+    Logger.info("Initializing cache #{table_name}")
 
-    :ets.new(name, [:set, :protected, :named_table])
+    :ets.new(table_name, [:set, :protected, :named_table])
 
     {:ok, state, {:continue, :warmup}}
   end
 
   @impl GenServer
-  def handle_continue(:warmup, [name] = state) do
+  def handle_continue(:warmup, %{table_name: table_name} = state) do
     Component
     |> Repo.all()
     |> Enum.each(fn component ->
-      true = :ets.insert(name, {component.id, component})
+      true = :ets.insert(table_name, {component.id, component})
     end)
 
-    Logger.info("Cache warmed up for #{name}")
+    Logger.info("Cache warmed up for #{table_name}")
 
     {:noreply, state}
   end
 
   @impl GenServer
-  def handle_call({:get, key}, _from, [name] = state) do
+  def handle_call({:get, key}, _from, %{table_name: table_name} = state) do
     reply =
-      case :ets.lookup(name, key) do
+      case :ets.lookup(table_name, key) do
         [] -> nil
         [_key, component_state] -> component_state
       end
@@ -58,8 +63,8 @@ defmodule Warehouse.GenServers.Cache do
   end
 
   @impl GenServer
-  def handle_cast({:put, key, data}, [name] = state) do
-    :ets.insert(name, {key, data})
+  def handle_cast({:put, key, data}, %{table_name: table_name} = state) do
+    :ets.insert(table_name, {key, data})
 
     {:noreply, state}
   end
