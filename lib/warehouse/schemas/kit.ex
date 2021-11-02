@@ -10,7 +10,7 @@ defmodule Warehouse.Schemas.Kit do
   any row, if the SKU has enough quantity, could satisfy the Component.
 
   Future versions will be rewritten to use a JSON blob for mapping instead of
-  fkey table references. This will allow more flexability (needed for AND
+  Foreign Key table references. This will allow more flexibility (needed for AND
   support), while also being easier to edit on the client side. It will also
   include features like:
 
