@@ -22,8 +22,7 @@ config :warehouse,
     # sarah's desk
     401
   ],
-  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
-  warmup: &Warehouse.warmup/0
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []}
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
