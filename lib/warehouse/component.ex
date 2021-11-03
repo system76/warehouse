@@ -51,7 +51,7 @@ defmodule Warehouse.Component do
   @spec warmup_components() :: :ok
   def warmup_components() do
     for component <- Repo.all(Schemas.Component) do
-      DynamicSupervisor.start_child(@supervisor, {GenServers.Component, component})
+      DynamicSupervisor.start_child(@supervisor, {GenServers.Component, [component: component]})
     end
 
     :ok
