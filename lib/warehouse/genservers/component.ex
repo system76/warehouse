@@ -11,27 +11,43 @@ defmodule Warehouse.GenServers.Component do
 
   alias Warehouse.{Kit, Schemas, Sku}
 
-  def start_link(%Schemas.Component{} = component) do
-    GenServer.start_link(__MODULE__, component, name: name(component))
+  # Check for new kit updates every minute.
+  @update_interval_ms :timer.seconds(60)
+
+  def start_link(opts) do
+    component = opts[:component]
+    update_interval = opts[:update_interval] || @update_interval_ms
+
+    GenServer.start_link(
+      __MODULE__,
+      %{component: component, update_interval: update_interval},
+      name: name(component)
+    )
   end
 
   defp name(%Schemas.Component{id: id}), do: name(id)
   defp name(id), do: {:via, Registry, {Warehouse.ComponentRegistry, to_string(id)}}
 
   @impl true
-  def init(%Schemas.Component{} = component) do
+  def init(%{component: %Schemas.Component{} = component, update_interval: update_interval}) do
     Logger.metadata(component_id: component.id)
 
     kits = Kit.get_component_kits(component.id)
+    schedule_next_update(update_interval)
 
     {:ok,
      %{
+       update_interval: update_interval,
        available: 0,
        component: component,
        demand: 0,
        kits: kits,
        sku_demands: %{}
      }}
+  end
+
+  def update_interval do
+    @update_interval_ms
   end
 
   @impl true
@@ -70,6 +86,20 @@ defmodule Warehouse.GenServers.Component do
     {:noreply, %{state | kits: kits}}
   end
 
+  @impl true
+  def handle_info(:update_kits, %{component: component, kits: kits, update_interval: update_interval} = state) do
+    new_kits = Kit.get_component_kits(component.id)
+
+    schedule_next_update(update_interval)
+
+    if Enum.sort(new_kits) == Enum.sort(kits) do
+      {:noreply, state}
+    else
+      Process.send_after(self(), :update_available, 1)
+      {:noreply, %{state | kits: new_kits}}
+    end
+  end
+
   def handle_info(:update_available, state) do
     new_available = Kit.get_kit_availability(state.kits)
 
@@ -96,4 +126,8 @@ defmodule Warehouse.GenServers.Component do
   def handle_info({:DOWN, _ref, :process, _pid, _reason}, state), do: {:noreply, state}
 
   defp events_module(), do: Application.get_env(:warehouse, :events)
+
+  defp schedule_next_update(update_interval) do
+    Process.send_after(self(), :update_kits, update_interval)
+  end
 end
