@@ -28,14 +28,6 @@ defmodule Warehouse.ComponentTest do
     assert Component.list_components(ids) == components
   end
 
-  test "warmup_components/0 starts all component supervisors" do
-    component = insert(:component)
-    assert Warehouse.ComponentRegistry |> Registry.lookup(to_string(component.id)) |> length() == 0
-
-    Component.warmup_components()
-    assert Warehouse.ComponentRegistry |> Registry.lookup(to_string(component.id)) |> length() == 1
-  end
-
   test "get_component/1 finds a component by ID" do
     component = :component |> insert() |> supervise()
     assert Component.get_component(component.id) == component
@@ -53,7 +45,7 @@ defmodule Warehouse.ComponentTest do
     |> Ecto.Changeset.change(%{quantity: 7})
     |> Repo.update()
 
-    :timer.sleep(update_interval_ms + 1)
+    Process.sleep(update_interval_ms + 1)
 
     assert [
              %{
@@ -80,7 +72,7 @@ defmodule Warehouse.ComponentTest do
     new_sku = :sku |> insert() |> supervise()
     %{sku_id: new_sku_id} = insert(:kit, component: component, sku: new_sku, quantity: 4)
 
-    :timer.sleep(update_interval_ms + 1)
+    Process.sleep(update_interval_ms + 1)
 
     assert [
              %{
