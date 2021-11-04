@@ -42,12 +42,13 @@ defmodule Warehouse.GenServers.InsertMonitor do
 
   ## GenServer API
 
-  @impl GenServer
+  @impl true
   def init(state) do
+    Process.flag(:trap_exit, true)
     {:ok, state, {:continue, :warmup}}
   end
 
-  @impl GenServer
+  @impl true
   def handle_continue(:warmup, %State{fetch_interval: fetch_interval} = state) do
     {last_sku_id, last_component_id} = fetch(state)
     Logger.info("Components cache warmed up")
@@ -56,12 +57,21 @@ defmodule Warehouse.GenServers.InsertMonitor do
     {:noreply, %State{state | last_sku_id: last_sku_id, last_component_id: last_component_id}}
   end
 
-  @impl GenServer
+  @impl true
   def handle_info(:fetch, %State{fetch_interval: fetch_interval} = state) do
     {last_sku_id, last_component_id} = fetch(state)
     schedule_next_fetch(fetch_interval)
 
     {:noreply, %State{state | last_sku_id: last_sku_id, last_component_id: last_component_id}}
+  end
+
+  # Handle messages from the TaskSupervisor and do nothing about them
+  def handle_info({_ref, _answer}, state) do
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, _reason}, state) do
+    {:noreply, state}
   end
 
   defp schedule_next_fetch(fetch_interval) do
