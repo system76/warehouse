@@ -26,7 +26,7 @@ defmodule Warehouse.GenServers.InsertMonitor do
     ]
 
     @type t :: %__MODULE__{
-            fetch_interval: :timer.time(),
+            fetch_interval: non_neg_integer(),
             last_sku_id: non_neg_integer(),
             last_component_id: non_neg_integer()
           }
