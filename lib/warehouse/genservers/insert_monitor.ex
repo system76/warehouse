@@ -6,6 +6,7 @@ defmodule Warehouse.GenServers.InsertMonitor do
 
   import Ecto.Query
 
+  alias Warehouse.Clients.Assembly
   alias Warehouse.Repo
   alias Warehouse.Schemas.Component
   alias Warehouse.Schemas.Sku
@@ -134,7 +135,7 @@ defmodule Warehouse.GenServers.InsertMonitor do
   end
 
   defp update_demands() do
-    Warehouse.AssemblyService.request_component_demands()
+    Assembly.request_component_demands()
     |> Stream.map(fn %{component_id: id, demand_quantity: demand} -> [id, demand] end)
     |> Stream.each(&apply(Warehouse.Component, :update_component_demand, &1))
     |> Stream.run()

@@ -1,4 +1,4 @@
-defmodule Warehouse.AssemblyServiceClient do
+defmodule Warehouse.Clients.Assembly.Connection do
   @moduledoc """
   A basic GenServer responsible for keeping the HTTPS gRPC connection to the
   assembly microservice alive.
