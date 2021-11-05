@@ -22,8 +22,8 @@ defmodule Warehouse.Application do
     ]
 
     children =
-      if Application.get_env(:warehouse, Warehouse.AssemblyServiceClient)[:enabled?],
-        do: children ++ [Warehouse.AssemblyServiceClient],
+      if Application.get_env(:warehouse, Warehouse.Clients.Assembly.Connection)[:enabled?],
+        do: children ++ [Warehouse.Clients.Assembly.Connection],
         else: children
 
     Logger.info("Starting Warehouse")

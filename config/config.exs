@@ -40,7 +40,7 @@ config :ex_aws,
   secret_access_key: nil,
   region: nil
 
-config :warehouse, Warehouse.AssemblyServiceClient,
+config :warehouse, Warehouse.Clients.Assembly.Connection,
   enabled?: false,
   url: "",
   ssl: false
