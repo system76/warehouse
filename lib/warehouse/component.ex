@@ -45,19 +45,6 @@ defmodule Warehouse.Component do
   end
 
   @doc """
-  Starts a `Warehouse.GenServers.Component` instance for everything in the database.
-  This is used on application startup.
-  """
-  @spec warmup_components() :: :ok
-  def warmup_components() do
-    for component <- Repo.all(Schemas.Component) do
-      DynamicSupervisor.start_child(@supervisor, {GenServers.Component, [component: component]})
-    end
-
-    :ok
-  end
-
-  @doc """
   Grabs information about a single component.
 
   ## Examples
