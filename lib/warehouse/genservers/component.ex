@@ -9,6 +9,7 @@ defmodule Warehouse.GenServers.Component do
 
   require Logger
 
+  alias Warehouse.Clients.Assembly
   alias Warehouse.{Kit, Schemas, Sku}
 
   # Check for new kit updates every minute.
@@ -95,7 +96,8 @@ defmodule Warehouse.GenServers.Component do
     if Enum.sort(new_kits) == Enum.sort(kits) do
       {:noreply, state}
     else
-      Process.send_after(self(), :update_available, 1)
+      Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, &update_demands/0)
+      Process.send_after(self(), :update_available, 0)
       {:noreply, %{state | kits: new_kits}}
     end
   end
@@ -129,5 +131,12 @@ defmodule Warehouse.GenServers.Component do
 
   defp schedule_next_update(update_interval) do
     Process.send_after(self(), :update_kits, update_interval)
+  end
+
+  defp update_demands() do
+    Assembly.request_component_demands()
+    |> Stream.map(fn %{component_id: id, demand_quantity: demand} -> [id, demand] end)
+    |> Stream.each(&apply(Warehouse.Component, :update_component_demand, &1))
+    |> Stream.run()
   end
 end
