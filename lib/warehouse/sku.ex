@@ -47,19 +47,6 @@ defmodule Warehouse.Sku do
   end
 
   @doc """
-  Starts a `Warehouse.GenServers.Sku` instance for everything in the database.
-  This is used on application startup.
-  """
-  @spec warmup_skus() :: :ok
-  def warmup_skus() do
-    for sku <- Repo.all(Schemas.Sku) do
-      DynamicSupervisor.start_child(@supervisor, {GenServers.Sku, sku})
-    end
-
-    :ok
-  end
-
-  @doc """
   Grabs information about a single SKU.
 
   ## Examples
