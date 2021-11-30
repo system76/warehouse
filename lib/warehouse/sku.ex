@@ -5,7 +5,7 @@ defmodule Warehouse.Sku do
   processes.
   """
 
-  alias Warehouse.{AdditiveMap, Component, GenServers, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, Component, Schemas}
 
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry

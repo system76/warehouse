@@ -5,7 +5,7 @@ defmodule Warehouse.Component do
   and the `GenServer` processes.
   """
 
-  alias Warehouse.{AdditiveMap, GenServers, Kit, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, Kit, Schemas}
 
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
