@@ -86,6 +86,12 @@ defmodule Warehouse.Broadway do
     Sku.update_sku_availability(sku_id)
   end
 
+  def notify_handler({:component_kit_changed, %{component: %{id: component_id}}}) do
+    Logger.metadata(component_id: component_id)
+    Logger.info("Handling ComponentKitChanged message")
+    :ignored
+  end
+
   def notify_handler({event, message}) do
     Logger.warn("Ignoring #{event} message", resource: inspect(message))
     :ignored
