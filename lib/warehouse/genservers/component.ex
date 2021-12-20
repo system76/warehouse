@@ -10,45 +10,34 @@ defmodule Warehouse.GenServers.Component do
   require Logger
 
   alias Warehouse.Clients.Assembly
-  alias Warehouse.{Kit, Schemas, Sku}
-
-  # Check for new kit updates every minute.
-  @update_interval_ms :timer.seconds(60)
+  alias Warehouse.Component
+  alias Warehouse.Kit
+  alias Warehouse.Schemas
+  alias Warehouse.Sku
 
   def start_link(opts) do
     component = opts[:component]
-    update_interval = opts[:update_interval] || @update_interval_ms
 
-    GenServer.start_link(
-      __MODULE__,
-      %{component: component, update_interval: update_interval},
-      name: name(component)
-    )
+    GenServer.start_link(__MODULE__, %{component: component}, name: name(component))
   end
 
   defp name(%Schemas.Component{id: id}), do: name(id)
   defp name(id), do: {:via, Registry, {Warehouse.ComponentRegistry, to_string(id)}}
 
   @impl true
-  def init(%{component: %Schemas.Component{} = component, update_interval: update_interval}) do
+  def init(%{component: %Schemas.Component{} = component}) do
     Logger.metadata(component_id: component.id)
 
     kits = Kit.get_component_kits(component.id)
-    schedule_next_update(update_interval)
 
     {:ok,
      %{
-       update_interval: update_interval,
        available: 0,
        component: component,
        demand: 0,
        kits: kits,
        sku_demands: %{}
      }}
-  end
-
-  def update_interval do
-    @update_interval_ms
   end
 
   @impl true
@@ -83,23 +72,12 @@ defmodule Warehouse.GenServers.Component do
 
   @impl true
   def handle_cast({:set_kits, kits}, state) do
+    Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, fn ->
+      update_demands(state.component.id)
+    end)
+
     Process.send_after(self(), :update_available, 0)
     {:noreply, %{state | kits: kits}}
-  end
-
-  @impl true
-  def handle_info(:update_kits, %{component: component, kits: kits, update_interval: update_interval} = state) do
-    new_kits = Kit.get_component_kits(component.id)
-
-    schedule_next_update(update_interval)
-
-    if Enum.sort(new_kits) == Enum.sort(kits) do
-      {:noreply, state}
-    else
-      Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, &update_demands/0)
-      Process.send_after(self(), :update_available, 0)
-      {:noreply, %{state | kits: new_kits}}
-    end
   end
 
   def handle_info(:update_available, state) do
@@ -129,14 +107,12 @@ defmodule Warehouse.GenServers.Component do
 
   defp events_module(), do: Application.get_env(:warehouse, :events)
 
-  defp schedule_next_update(update_interval) do
-    Process.send_after(self(), :update_kits, update_interval)
-  end
-
-  defp update_demands() do
+  defp update_demands(component_id) do
     Assembly.request_component_demands()
-    |> Stream.map(fn %{component_id: id, demand_quantity: demand} -> [id, demand] end)
-    |> Stream.each(&apply(Warehouse.Component, :update_component_demand, &1))
+    |> Stream.filter(fn %{component_id: id} -> to_string(id) == to_string(component_id) end)
+    |> Stream.each(fn %{component_id: id, demand_quantity: demand} ->
+      Component.update_component_demand(id, demand)
+    end)
     |> Stream.run()
   end
 end

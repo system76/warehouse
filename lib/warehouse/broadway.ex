@@ -89,7 +89,11 @@ defmodule Warehouse.Broadway do
   def notify_handler({:component_kit_changed, %{component: %{id: component_id}}}) do
     Logger.metadata(component_id: component_id)
     Logger.info("Handling ComponentKitChanged message")
-    :ignored
+
+    case Component.update_component_kits(component_id) do
+      :ok -> :ok
+      :error -> Logger.error("Unable to update component demand")
+    end
   end
 
   def notify_handler({event, message}) do

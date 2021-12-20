@@ -33,61 +33,6 @@ defmodule Warehouse.ComponentTest do
     assert Component.get_component(component.id) == component
   end
 
-  test "component kits get updated when quantity changes in the DB" do
-    update_interval_ms = 5
-    sku = :sku |> insert() |> supervise()
-    component = insert(:component)
-    %{sku_id: sku_id} = kit = insert(:kit, component: component, sku: sku, quantity: 2)
-    supervise(component, update_interval_ms)
-
-    # Update kit quantity
-    kit
-    |> Ecto.Changeset.change(%{quantity: 7})
-    |> Repo.update()
-
-    Process.sleep(update_interval_ms + 1)
-
-    assert [
-             %{
-               skus: [
-                 %{id: ^sku_id, required_quantity: 7}
-               ]
-             }
-           ] = Component.get_component_picking_options(component.id)
-  end
-
-  test "component kits get updated when new kits are inserted in the DB" do
-    update_interval_ms = 5
-    sku = :sku |> insert() |> supervise()
-    component = insert(:component)
-    %{sku_id: sku_id} = kit = insert(:kit, component: component, sku: sku, quantity: 1)
-    supervise(component, update_interval_ms)
-
-    # Update kit quantity
-    kit
-    |> Ecto.Changeset.change(%{quantity: 3})
-    |> Repo.update()
-
-    # Insert new kits
-    new_sku = :sku |> insert() |> supervise()
-    %{sku_id: new_sku_id} = insert(:kit, component: component, sku: new_sku, quantity: 4)
-
-    Process.sleep(update_interval_ms + 1)
-
-    assert [
-             %{
-               skus: [
-                 %{id: ^sku_id, required_quantity: 3}
-               ]
-             },
-             %{
-               skus: [
-                 %{id: ^new_sku_id, required_quantity: 4}
-               ]
-             }
-           ] = Component.get_component_picking_options(component.id)
-  end
-
   test "get_component/1 returns nil if component doesn't exist or is not supervised" do
     component = build(:component)
     assert Component.get_component(component.id) == nil

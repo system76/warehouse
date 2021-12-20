@@ -160,6 +160,12 @@ defmodule Warehouse.Component do
       :ok
 
   """
+  @spec update_component_kits(integer) :: :ok | :error
+  def update_component_kits(id) do
+    new_kits = Kit.get_component_kits(to_string(id))
+    update_component_kits(id, new_kits)
+  end
+
   @spec update_component_kits(integer, [Schemas.Kit.t()]) :: :ok | :error
   def update_component_kits(id, kits) do
     case Registry.lookup(@registry, to_string(id)) do

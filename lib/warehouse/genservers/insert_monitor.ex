@@ -96,7 +96,7 @@ defmodule Warehouse.GenServers.InsertMonitor do
       end)
 
     last_sku_id = new_skus |> List.last() |> id_or_nil()
-    Logger.info("Spawned #{new_sku_count} new SKU processes", last_sku_id: last_sku_id)
+    Logger.debug("Spawned #{new_sku_count} new SKU processes", last_sku_id: last_sku_id)
 
     last_sku_id
   end
@@ -113,7 +113,7 @@ defmodule Warehouse.GenServers.InsertMonitor do
 
     last_component_id = new_components |> List.last() |> id_or_nil()
 
-    Logger.info("Spawned #{new_components_count} new component processes",
+    Logger.debug("Spawned #{new_components_count} new component processes",
       last_component_id: last_component_id
     )
 
