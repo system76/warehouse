@@ -5,7 +5,7 @@ defmodule Warehouse.Component do
   and the `GenServer` processes.
   """
 
-  alias Warehouse.{AdditiveMap, GenServers, Kit, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, Kit, Schemas}
 
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
@@ -42,19 +42,6 @@ defmodule Warehouse.Component do
     |> Enum.map(&to_string/1)
     |> Enum.flat_map(&Registry.lookup(@registry, &1))
     |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info) end)
-  end
-
-  @doc """
-  Starts a `Warehouse.GenServers.Component` instance for everything in the database.
-  This is used on application startup.
-  """
-  @spec warmup_components() :: :ok
-  def warmup_components() do
-    for component <- Repo.all(Schemas.Component) do
-      DynamicSupervisor.start_child(@supervisor, {GenServers.Component, component})
-    end
-
-    :ok
   end
 
   @doc """
@@ -173,6 +160,12 @@ defmodule Warehouse.Component do
       :ok
 
   """
+  @spec update_component_kits(integer) :: :ok | :error
+  def update_component_kits(id) do
+    new_kits = Kit.get_component_kits(to_string(id))
+    update_component_kits(id, new_kits)
+  end
+
   @spec update_component_kits(integer, [Schemas.Kit.t()]) :: :ok | :error
   def update_component_kits(id, kits) do
     case Registry.lookup(@registry, to_string(id)) do

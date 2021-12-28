@@ -22,8 +22,7 @@ config :warehouse,
     # sarah's desk
     401
   ],
-  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []},
-  warmup: &Warehouse.warmup/0
+  producer: {BroadwayRabbitMQ.Producer, queue: "", connection: []}
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
@@ -36,12 +35,7 @@ config :logger_json, :backend,
 
 config :grpc, start_server: true
 
-config :ex_aws,
-  access_key_id: nil,
-  secret_access_key: nil,
-  region: nil
-
-config :warehouse, Warehouse.AssemblyServiceClient,
+config :warehouse, Warehouse.Clients.Assembly.Connection,
   enabled?: false,
   url: "",
   ssl: false

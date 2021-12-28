@@ -46,7 +46,10 @@ defmodule Warehouse.Factory do
 
   def supervise(%Component{} = component) do
     with {:ok, _pid} <-
-           DynamicSupervisor.start_child(Warehouse.ComponentSupervisor, {Warehouse.GenServers.Component, component}) do
+           DynamicSupervisor.start_child(
+             Warehouse.ComponentSupervisor,
+             {Warehouse.GenServers.Component, [component: component]}
+           ) do
       component
     end
   end

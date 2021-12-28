@@ -9,17 +9,23 @@ defmodule Warehouse.GenServers.Component do
 
   require Logger
 
-  alias Warehouse.{Kit, Schemas, Sku}
+  alias Warehouse.Clients.Assembly
+  alias Warehouse.Component
+  alias Warehouse.Kit
+  alias Warehouse.Schemas
+  alias Warehouse.Sku
 
-  def start_link(%Schemas.Component{} = component) do
-    GenServer.start_link(__MODULE__, component, name: name(component))
+  def start_link(opts) do
+    component = opts[:component]
+
+    GenServer.start_link(__MODULE__, %{component: component}, name: name(component))
   end
 
   defp name(%Schemas.Component{id: id}), do: name(id)
   defp name(id), do: {:via, Registry, {Warehouse.ComponentRegistry, to_string(id)}}
 
   @impl true
-  def init(%Schemas.Component{} = component) do
+  def init(%{component: %Schemas.Component{} = component}) do
     Logger.metadata(component_id: component.id)
 
     kits = Kit.get_component_kits(component.id)
@@ -66,6 +72,10 @@ defmodule Warehouse.GenServers.Component do
 
   @impl true
   def handle_cast({:set_kits, kits}, state) do
+    Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, fn ->
+      update_demands(state.component.id)
+    end)
+
     Process.send_after(self(), :update_available, 0)
     {:noreply, %{state | kits: kits}}
   end
@@ -96,4 +106,13 @@ defmodule Warehouse.GenServers.Component do
   def handle_info({:DOWN, _ref, :process, _pid, _reason}, state), do: {:noreply, state}
 
   defp events_module(), do: Application.get_env(:warehouse, :events)
+
+  defp update_demands(component_id) do
+    Assembly.request_component_demands()
+    |> Stream.filter(fn %{component_id: id} -> to_string(id) == to_string(component_id) end)
+    |> Stream.each(fn %{component_id: id, demand_quantity: demand} ->
+      Component.update_component_demand(id, demand)
+    end)
+    |> Stream.run()
+  end
 end

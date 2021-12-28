@@ -1,4 +1,4 @@
-defmodule Warehouse.AssemblyService do
+defmodule Warehouse.Clients.Assembly.DefaultClient do
   @moduledoc """
   Handles forming the request and parsing the response from the assembly
   microservice gRPC server.
@@ -7,13 +7,15 @@ defmodule Warehouse.AssemblyService do
   require Logger
 
   alias Bottle.Assembly.V1.{ListComponentDemandsRequest, Stub}
-  alias Warehouse.AssemblyServiceClient
+  alias Warehouse.Clients.Assembly.Connection
 
-  @spec request_component_demands() :: Enumerable.t()
+  @behaviour Warehouse.Clients.Assembly
+
+  @impl true
   def request_component_demands() do
     request = ListComponentDemandsRequest.new(request_id: Bottle.RequestId.write(:queue))
 
-    with {:ok, channel} <- AssemblyServiceClient.channel(),
+    with {:ok, channel} <- Connection.channel(),
          {:ok, stream} <- Stub.list_component_demands(channel, request) do
       Stream.map(stream, &cast/1)
     else

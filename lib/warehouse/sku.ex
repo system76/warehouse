@@ -5,7 +5,7 @@ defmodule Warehouse.Sku do
   processes.
   """
 
-  alias Warehouse.{AdditiveMap, Component, GenServers, Repo, Schemas}
+  alias Warehouse.{AdditiveMap, Component, Schemas}
 
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry
@@ -44,19 +44,6 @@ defmodule Warehouse.Sku do
     |> Enum.map(&to_string/1)
     |> Enum.flat_map(&Registry.lookup(@registry, &1))
     |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info) end)
-  end
-
-  @doc """
-  Starts a `Warehouse.GenServers.Sku` instance for everything in the database.
-  This is used on application startup.
-  """
-  @spec warmup_skus() :: :ok
-  def warmup_skus() do
-    for sku <- Repo.all(Schemas.Sku) do
-      DynamicSupervisor.start_child(@supervisor, {GenServers.Sku, sku})
-    end
-
-    :ok
   end
 
   @doc """
