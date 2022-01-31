@@ -43,18 +43,10 @@ defmodule Warehouse.GenServers.InsertMonitor do
   ## GenServer API
 
   @impl true
-  def init(state) do
+  def init(%State{fetch_interval: fetch_interval} = state) do
     Process.flag(:trap_exit, true)
-    {:ok, state, {:continue, :warmup}}
-  end
-
-  @impl true
-  def handle_continue(:warmup, %State{fetch_interval: fetch_interval} = state) do
-    {last_sku_id, last_component_id} = fetch(state)
-    Logger.info("Components cache warmed up")
     schedule_next_fetch(fetch_interval)
-
-    {:noreply, %State{state | last_sku_id: last_sku_id, last_component_id: last_component_id}}
+    {:ok, state}
   end
 
   @impl true
