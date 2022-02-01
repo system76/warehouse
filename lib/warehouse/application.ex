@@ -17,8 +17,7 @@ defmodule Warehouse.Application do
       {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
       Warehouse.Repo,
       {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
-      {Warehouse.Broadway, []},
-      {Warehouse.GenServers.InsertMonitor, []}
+      {Warehouse.Broadway, []}
     ]
 
     children =
