@@ -18,23 +18,23 @@ defmodule Warehouse.Clients.Assembly.Connection do
 
   @impl true
   def init(_) do
-    Logger.debug("Warehouse.Clients.Assembly.Connection connecting to gateway at #{config(:url)}")
+    Logger.info("Warehouse.Clients.Assembly.Connection connecting to gateway at #{config(:url)}")
 
     case GRPC.Stub.connect(config(:url), assembly_service_options()) do
+      {:ok, channel} ->
+        Logger.info("Warehouse.Clients.Assembly.Connection connected")
+        {:ok, channel}
+
       {:error, error} ->
         Logger.error("Warehouse.Clients.Assembly.Connection could not connect: #{error}")
         Process.sleep(5000)
         init(%{})
-
-      channel ->
-        Logger.debug("Warehouse.Clients.Assembly.Connection connected")
-        {:ok, channel}
     end
   end
 
   @impl true
   def handle_info({:gun_down, _, _, _, _}, _state) do
-    Logger.debug("Warehouse.Clients.Assembly.Connection disconnected")
+    Logger.info("Warehouse.Clients.Assembly.Connection disconnected")
 
     with {:ok, channel} <- init(%{}) do
       {:noreply, channel}
@@ -43,7 +43,7 @@ defmodule Warehouse.Clients.Assembly.Connection do
 
   @impl true
   def handle_info({:gun_up, _, _, _, _}, _state) do
-    Logger.debug("Warehouse.Clients.Assembly.Connection connected")
+    Logger.info("Warehouse.Clients.Assembly.Connection connected")
 
     with {:ok, channel} <- init(%{}) do
       {:noreply, channel}
