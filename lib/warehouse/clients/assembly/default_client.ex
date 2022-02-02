@@ -13,12 +13,13 @@ defmodule Warehouse.Clients.Assembly.DefaultClient do
 
   @impl true
   def request_component_demands() do
+    channel = Connection.channel()
     request = ListComponentDemandsRequest.new(request_id: Bottle.RequestId.write(:queue))
 
-    with {:ok, channel} <- Connection.channel(),
-         {:ok, stream} <- Stub.list_component_demands(channel, request) do
-      Stream.map(stream, &cast/1)
-    else
+    case Stub.list_component_demands(channel, request) do
+      {:ok, stream} ->
+        Stream.map(stream, &cast/1)
+
       {:error, reason} ->
         Logger.error("Unable to get component demand from assembly service", resource: inspect(reason))
         Stream.cycle([])

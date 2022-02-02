@@ -17,8 +17,7 @@ defmodule Warehouse.Application do
       {DynamicSupervisor, name: Warehouse.SkuSupervisor, strategy: :one_for_one},
       Warehouse.Repo,
       {GRPC.Server.Supervisor, {Warehouse.Endpoint, 50_051}},
-      {Warehouse.Broadway, []},
-      {Warehouse.GenServers.InsertMonitor, []}
+      {Warehouse.Broadway, []}
     ]
 
     children =
@@ -30,6 +29,14 @@ defmodule Warehouse.Application do
 
     opts = [strategy: :one_for_one, name: Warehouse.Supervisor]
 
-    {:ok, _pid} = Supervisor.start_link(children, opts)
+    with {:ok, pid} <- Supervisor.start_link(children, opts) do
+      Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, fn ->
+        :warehouse
+        |> Application.get_env(:warmup)
+        |> apply([])
+      end)
+
+      {:ok, pid}
+    end
   end
 end

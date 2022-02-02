@@ -3,7 +3,8 @@ defmodule Warehouse.ComponentTest do
 
   import Mox
 
-  alias Warehouse.{AdditiveMap, Component}
+  alias Warehouse.AdditiveMap
+  alias Warehouse.Component
 
   def demand_fixture(sku, kit_quantity, component_demand, parts_available) do
     component = insert(:component)
@@ -26,6 +27,14 @@ defmodule Warehouse.ComponentTest do
 
     ids = Enum.map(components, & &1.id)
     assert Component.list_components(ids) == components
+  end
+
+  test "warmup_components/0 starts all component supervisors" do
+    component = insert(:component)
+    assert Warehouse.ComponentRegistry |> Registry.lookup(to_string(component.id)) |> length() == 0
+
+    Component.warmup_components()
+    assert Warehouse.ComponentRegistry |> Registry.lookup(to_string(component.id)) |> length() == 1
   end
 
   test "get_component/1 finds a component by ID" do
