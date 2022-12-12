@@ -1,4 +1,4 @@
-FROM elixir:1.11-alpine as build
+FROM elixir:1.13-alpine as build
 
 # Install deps
 RUN set -xe; \
@@ -7,6 +7,8 @@ RUN set -xe; \
         g++ \
         gcc \
         git \
+        libmcrypt \
+        libmcrypt-dev \
         make \
         musl-dev \
         python3 \
