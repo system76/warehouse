@@ -18,11 +18,11 @@ defmodule Warehouse.Clients.Assembly.Connection do
 
   @impl true
   def init(_) do
-    Logger.info("Warehouse.Clients.Assembly.Connection initializing, connecting to gateway at #{config(:url)}")
+    Logger.info("Warehouse.Clients.Assembly.Connection connecting to gateway at #{config(:url)}")
 
     case GRPC.Stub.connect(config(:url), assembly_service_options()) do
       {:ok, channel} ->
-        Logger.info("Warehouse.Clients.Assembly.Connection initialized")
+        Logger.info("Warehouse.Clients.Assembly.Connection connected")
         {:ok, channel}
 
       {:error, error} ->
@@ -33,20 +33,21 @@ defmodule Warehouse.Clients.Assembly.Connection do
   end
 
   @impl true
-  def handle_info(t, state) when is_tuple(t) and elem(t, 0) == :gun_down do
-    Logger.error("Warehouse.Clients.Assembly.Connection disconnected via gun, attempting to reconnect...")
+  def handle_info({:gun_down, _, _, _, _}, _state) do
+    Logger.info("Warehouse.Clients.Assembly.Connection disconnected")
 
-    case init(%{}) do
-      {:ok, channel} ->
-        Logger.info("Warehouse.Clients.Assembly.Connection reconnected")
-        {:noreply, channel}
+    with {:ok, channel} <- init(%{}) do
+      {:noreply, channel}
     end
   end
 
   @impl true
-  def handle_info(t, state) when is_tuple(t) and elem(t, 0) == :gun_up do
-    Logger.debug("Warehouse.Clients.Assembly.Connection connected via gun")
-    {:noreply, state}
+  def handle_info({:gun_up, _, _, _, _}, _state) do
+    Logger.info("Warehouse.Clients.Assembly.Connection connected")
+
+    with {:ok, channel} <- init(%{}) do
+      {:noreply, channel}
+    end
   end
 
   @impl true
