@@ -38,6 +38,9 @@ RUN set -xe; \
     apk add --update  --no-cache --virtual .runtime-deps \
         ca-certificates \
         libmcrypt \
+        libmcrypt-dev \
+        openssl \
+        libstdc++ \
         ncurses-libs \
         tzdata;
 
