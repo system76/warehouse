@@ -32,7 +32,7 @@ RUN set -xe; \
     mix deps.compile --all; \
     mix release
 
-FROM alpine:3.9 as release
+FROM alpine:3.16 as release
 
 RUN set -xe; \
     apk add --update  --no-cache --virtual .runtime-deps \
