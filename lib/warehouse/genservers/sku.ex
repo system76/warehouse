@@ -41,6 +41,7 @@ defmodule Warehouse.GenServers.Sku do
 
   @impl true
   def handle_call(:get_quantity, _from, state) do
+    Logger.debug("handling Sku.get_quantity with state: #{inspect(state)}")
     {:reply, Map.take(state, [:available, :demand, :excess]), state}
   end
 

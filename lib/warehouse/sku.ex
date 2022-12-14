@@ -76,7 +76,9 @@ defmodule Warehouse.Sku do
   def get_sku(id) do
     case Registry.lookup(@registry, to_string(id)) do
       [{pid, _value}] -> GenServer.call(pid, :get_info)
-      _ -> nil
+      _ ->
+        Logger.debug("sku genserver not started for id: #{inspect(id)}")
+        nil
     end
   end
 
