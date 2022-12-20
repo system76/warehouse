@@ -34,7 +34,7 @@ defmodule Warehouse.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bottle, github: "system76/bottle", ref: "b3d741d"},
+      {:bottle, github: "system76/bottle", ref: "b84af908206f53234fe37d8d106ce93ee534b279"},
       {:broadway_rabbitmq, "~> 0.7.1"},
       {:credo, "~> 1.6", only: [:dev, :test]},
       {:decimal, "~> 2.0.0", override: true},

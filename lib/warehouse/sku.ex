@@ -11,6 +11,8 @@ defmodule Warehouse.Sku do
   alias Warehouse.Schemas
   alias Warehouse.Repo
 
+  require Logger
+
   @supervisor Warehouse.SkuSupervisor
   @registry Warehouse.SkuRegistry
 
