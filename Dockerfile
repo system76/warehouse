@@ -41,7 +41,7 @@ RUN set -xe; \
 # Create a `warehouse` group & user
 # I've been told before it's generally a good practice to reserve ids < 1000 for the system
 RUN set -xe; \
-    adduser --uid 1000 --system --home /warehouse --shell /bin/sh --group bullhorn;
+    adduser --uid 1000 --system --home /warehouse --shell /bin/sh --group warehouse;
 
 ARG APP_NAME=warehouse
 
