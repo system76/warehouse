@@ -114,7 +114,7 @@ defmodule Warehouse.Sku do
   @spec get_sku_quantity(id()) :: Schemas.Sku.quantity()
   def get_sku_quantity(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_quantity)
+      [{pid, _value}] -> GenServer.call(pid, :get_quantity, 60_000)
       _ -> %{available: 0, demand: 0, excess: 0}
     end
   end
