@@ -52,33 +52,44 @@ defmodule Warehouse.GenServers.Sku do
 
   @impl true
   def handle_cast({:update_demand, demand}, %{demand: current_demand} = state) do
+    Logger.info("handling update_demand for genserver: #{inspect(self())}")
     new_excess = max(state.available - demand, 0)
 
     if demand != current_demand or new_excess != state.excess do
       Logger.info("Updating demand quantity to #{demand} with #{new_excess} excess")
       new_state = %{state | demand: demand, excess: new_excess}
       events_module().broadcast_sku_quantities(state.sku.id, new_state)
+      Logger.info("replying for genserver: #{inspect(self())}")
       {:noreply, new_state}
     else
+      Logger.info("no state change for genserver: #{inspect(self())}")
       {:noreply, state}
     end
   end
 
   @impl true
   def handle_info(:update_available, %{sku: %{id: sku_id}} = state) do
+    Logger.info("handling update_available for genserver: #{inspect(self())} with state")
     new_pickable_locations = Part.get_pickable_locations_for_sku(sku_id)
+    Logger.info("new_pickable_locations: #{inspect(new_pickable_locations)}")
     new_available = new_pickable_locations |> Enum.map(&Map.get(&1, :quantity)) |> Enum.sum()
+    Logger.info("next_available: #{inspect(new_available)}")
     new_excess = max(new_available - state.demand, 0)
+    Logger.info("new_excess: #{inspect(new_excess)}")
 
     Process.send_after(self(), :update_available, Enum.random(3_600_000..7_200_000))
 
     if new_available != state.available or new_excess != state.excess do
       Logger.info("Updating available quantity to #{new_available} with #{new_excess} excess")
       new_state = %{state | available: new_available, excess: new_excess, pickable_locations: new_pickable_locations}
+      Logger.info("broadcasting update_available for genserver: #{inspect(self())} with reply #{inspect(new_state)}...")
       events_module().broadcast_sku_quantities(sku_id, new_state)
+      Logger.info("broadcasted.")
       Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, Component, :update_component_availability, [])
+      Logger.info("replying for genserver: #{inspect(self())}")
       {:noreply, new_state}
     else
+      Logger.info("no state change for #{inspect(self())}")
       {:noreply, state}
     end
   end
