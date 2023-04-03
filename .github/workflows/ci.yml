@@ -15,7 +15,7 @@ on:
 
 jobs:
   Test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     services:
       mysql:
@@ -56,7 +56,7 @@ jobs:
         run: mix test
 
   Format:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -75,7 +75,7 @@ jobs:
         run: mix format --check-formatted
 
   Credo:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -107,7 +107,7 @@ jobs:
         run: mix credo
 
   Dialyzer:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
