@@ -67,6 +67,8 @@ jobs:
         with:
           otp-version: 25
           elixir-version: '1.14'
+        env:
+          ImageOS: ubuntu22
 
       - name: Install (Deps)
         run: mix deps.get
