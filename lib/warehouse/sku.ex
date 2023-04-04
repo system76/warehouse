@@ -18,7 +18,7 @@ defmodule Warehouse.Sku do
 
   @type id :: integer() | String.t()
 
-  @timeout_genserver 120_000
+  @timeout_genserver 60_000
 
   @doc """
   Lists all SKUs we know about.
