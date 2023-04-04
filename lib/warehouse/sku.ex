@@ -18,6 +18,8 @@ defmodule Warehouse.Sku do
 
   @type id :: integer() | String.t()
 
+  @timeout_genserver 120_000
+
   @doc """
   Lists all SKUs we know about.
 
@@ -31,7 +33,7 @@ defmodule Warehouse.Sku do
   def list_skus() do
     @supervisor
     |> DynamicSupervisor.which_children()
-    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_info) end)
+    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_info, @timeout_genserver) end)
     |> Enum.into([])
   end
 
@@ -49,7 +51,7 @@ defmodule Warehouse.Sku do
     filter
     |> Enum.map(&to_string/1)
     |> Enum.flat_map(&Registry.lookup(@registry, &1))
-    |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info) end)
+    |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info, @timeout_genserver) end)
   end
 
   @doc """
@@ -77,7 +79,7 @@ defmodule Warehouse.Sku do
   @spec get_sku(id()) :: Schemas.Sku.t() | nil
   def get_sku(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_info)
+      [{pid, _value}] -> GenServer.call(pid, :get_info, @timeout_genserver)
       _ ->
         Logger.debug("sku genserver not started for id: #{inspect(id)}")
         nil
@@ -97,7 +99,7 @@ defmodule Warehouse.Sku do
   @spec get_sku_pickable_locations(id()) :: [Schemas.Location.quantity()]
   def get_sku_pickable_locations(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_pickable_locations)
+      [{pid, _value}] -> GenServer.call(pid, :get_pickable_locations, @timeout_genserver)
       _ -> []
     end
   end
@@ -114,7 +116,7 @@ defmodule Warehouse.Sku do
   @spec get_sku_quantity(id()) :: Schemas.Sku.quantity()
   def get_sku_quantity(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_quantity, 60_000)
+      [{pid, _value}] -> GenServer.call(pid, :get_quantity, @timeout_genserver)
       _ -> %{available: 0, demand: 0, excess: 0}
     end
   end
