@@ -14,7 +14,7 @@ defmodule Warehouse.Component do
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
 
-  @timeout_genserver 60_000
+  @timeout_genserver 120_000
 
   @doc """
   Lists all components we know about.

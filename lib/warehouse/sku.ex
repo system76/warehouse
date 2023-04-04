@@ -18,7 +18,7 @@ defmodule Warehouse.Sku do
 
   @type id :: integer() | String.t()
 
-  @timeout_genserver 60_000
+  @timeout_genserver 120_000
 
   @doc """
   Lists all SKUs we know about.
@@ -79,7 +79,9 @@ defmodule Warehouse.Sku do
   @spec get_sku(id()) :: Schemas.Sku.t() | nil
   def get_sku(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_info, @timeout_genserver)
+      [{pid, _value}] ->
+        GenServer.call(pid, :get_info, @timeout_genserver)
+
       _ ->
         Logger.debug("sku genserver not started for id: #{inspect(id)}")
         nil
