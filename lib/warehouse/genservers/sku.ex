@@ -80,7 +80,11 @@ defmodule Warehouse.GenServers.Sku do
     if new_available != state.available or new_excess != state.excess do
       Logger.info("Updating available quantity to #{new_available} with #{new_excess} excess")
       new_state = %{state | available: new_available, excess: new_excess, pickable_locations: new_pickable_locations}
-      Logger.debug("broadcasting update_available for genserver: #{inspect(self())} with reply #{inspect(new_state)}...")
+
+      Logger.debug(
+        "broadcasting update_available for genserver: #{inspect(self())} with reply #{inspect(new_state)}..."
+      )
+
       events_module().broadcast_sku_quantities(sku_id, new_state)
       Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, Component, :update_component_availability, [])
       Logger.debug("replying for :update_available")
