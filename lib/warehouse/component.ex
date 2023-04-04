@@ -14,6 +14,8 @@ defmodule Warehouse.Component do
   @supervisor Warehouse.ComponentSupervisor
   @registry Warehouse.ComponentRegistry
 
+  @timeout_genserver 120_000
+
   @doc """
   Lists all components we know about.
 
@@ -27,7 +29,7 @@ defmodule Warehouse.Component do
   def list_components() do
     @supervisor
     |> DynamicSupervisor.which_children()
-    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_info) end)
+    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_info, @timeout_genserver) end)
     |> Enum.into([])
   end
 
@@ -45,7 +47,7 @@ defmodule Warehouse.Component do
     filter
     |> Enum.map(&to_string/1)
     |> Enum.flat_map(&Registry.lookup(@registry, &1))
-    |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info) end)
+    |> Enum.map(fn {pid, _value} -> GenServer.call(pid, :get_info, @timeout_genserver) end)
   end
 
   @doc """
@@ -73,7 +75,7 @@ defmodule Warehouse.Component do
   @spec get_component(integer) :: Schemas.Component.t() | nil
   def get_component(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_info)
+      [{pid, _value}] -> GenServer.call(pid, :get_info, @timeout_genserver)
       _ -> nil
     end
   end
@@ -91,7 +93,7 @@ defmodule Warehouse.Component do
   @spec get_component_availability(integer) :: non_neg_integer()
   def get_component_availability(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_available)
+      [{pid, _value}] -> GenServer.call(pid, :get_available, @timeout_genserver)
       _ -> 0
     end
   end
@@ -109,7 +111,7 @@ defmodule Warehouse.Component do
   @spec get_component_picking_options(integer) :: [Kit.picking_option()]
   def get_component_picking_options(id) do
     case Registry.lookup(@registry, to_string(id)) do
-      [{pid, _value}] -> GenServer.call(pid, :get_picking_options)
+      [{pid, _value}] -> GenServer.call(pid, :get_picking_options, @timeout_genserver)
       _ -> []
     end
   end
@@ -128,7 +130,7 @@ defmodule Warehouse.Component do
   def get_sku_demands() do
     @supervisor
     |> DynamicSupervisor.which_children()
-    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_sku_demands) end)
+    |> Stream.map(fn {_, pid, _type, _modules} -> GenServer.call(pid, :get_sku_demands, @timeout_genserver) end)
     |> Enum.into([])
     |> Enum.reduce(%{}, &AdditiveMap.merge/2)
   end
