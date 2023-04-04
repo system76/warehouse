@@ -52,7 +52,8 @@ defmodule Warehouse.MixProject do
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},
       {:telemetry, "~> 0.4"},
-      {:gun, "2.0.0", hex: :grpc_gun, override: true}
+      {:gun, "2.0.0", hex: :grpc_gun, override: true},
+      {:cowlib, "~> 2.12.0", override: true}
     ]
   end
 
