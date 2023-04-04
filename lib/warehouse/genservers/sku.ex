@@ -41,6 +41,7 @@ defmodule Warehouse.GenServers.Sku do
 
   @impl true
   def handle_call(:get_quantity, _from, state) do
+    Logger.debug("handling Sku.get_quantity with state: #{inspect(state)}")
     {:reply, Map.take(state, [:available, :demand, :excess]), state}
   end
 
@@ -51,20 +52,25 @@ defmodule Warehouse.GenServers.Sku do
 
   @impl true
   def handle_cast({:update_demand, demand}, %{demand: current_demand} = state) do
+    Logger.debug("handling :update_demand with demand: #{inspect(demand)} for state: #{inspect(state)}")
     new_excess = max(state.available - demand, 0)
 
     if demand != current_demand or new_excess != state.excess do
       Logger.info("Updating demand quantity to #{demand} with #{new_excess} excess")
       new_state = %{state | demand: demand, excess: new_excess}
+      Logger.debug("broadcasting :update_demand quantity to #{demand} with excess #{new_excess}")
       events_module().broadcast_sku_quantities(state.sku.id, new_state)
+      Logger.debug("replying for :update_demand")
       {:noreply, new_state}
     else
+      Logger.debug("no state change for :update_demand")
       {:noreply, state}
     end
   end
 
   @impl true
   def handle_info(:update_available, %{sku: %{id: sku_id}} = state) do
+    Logger.debug("handling :update_available with state: #{inspect(state)}")
     new_pickable_locations = Part.get_pickable_locations_for_sku(sku_id)
     new_available = new_pickable_locations |> Enum.map(&Map.get(&1, :quantity)) |> Enum.sum()
     new_excess = max(new_available - state.demand, 0)
@@ -74,10 +80,13 @@ defmodule Warehouse.GenServers.Sku do
     if new_available != state.available or new_excess != state.excess do
       Logger.info("Updating available quantity to #{new_available} with #{new_excess} excess")
       new_state = %{state | available: new_available, excess: new_excess, pickable_locations: new_pickable_locations}
+      Logger.debug("broadcasting update_available for genserver: #{inspect(self())} with reply #{inspect(new_state)}...")
       events_module().broadcast_sku_quantities(sku_id, new_state)
       Task.Supervisor.async_nolink(Warehouse.TaskSupervisor, Component, :update_component_availability, [])
+      Logger.debug("replying for :update_available")
       {:noreply, new_state}
     else
+      Logger.debug("no state change for :update_available")
       {:noreply, state}
     end
   end
