@@ -51,7 +51,8 @@ defmodule Warehouse.MixProject do
       {:myxql, "~> 0.5"},
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},
-      {:telemetry, "~> 0.4"}
+      {:telemetry, "~> 0.4"},
+      {:gun, "2.0.0", hex: :grpc_gun, override: true}
     ]
   end
 
