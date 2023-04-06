@@ -5,7 +5,7 @@ defmodule Warehouse.MixProject do
     [
       app: :warehouse,
       version: "0.1.0",
-      elixir: "~> 1.10",
+      elixir: "~> 1.14.3",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -34,7 +34,7 @@ defmodule Warehouse.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bottle, github: "system76/bottle", ref: "b3d741d"},
+      {:bottle, github: "system76/bottle", ref: "cd3e55c3317b100678bbf16027505e22403996c1"},
       {:broadway_rabbitmq, "~> 0.7.1"},
       {:credo, "~> 1.6", only: [:dev, :test]},
       {:decimal, "~> 2.0.0", override: true},
@@ -51,7 +51,9 @@ defmodule Warehouse.MixProject do
       {:myxql, "~> 0.5"},
       {:spandex_datadog, "~> 1.1"},
       {:spandex, "~> 3.0.3"},
-      {:telemetry, "~> 0.4"}
+      {:telemetry, "~> 0.4"},
+      {:gun, "2.0.0", hex: :grpc_gun, override: true},
+      {:cowlib, "~> 2.12.0", override: true}
     ]
   end
 

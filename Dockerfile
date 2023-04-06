@@ -1,16 +1,13 @@
-FROM elixir:1.11-alpine as build
+FROM elixir:1.14-slim as build
 
 # Install deps
 RUN set -xe; \
-    apk add --update  --no-cache --virtual .build-deps \
+      apt-get update && \
+      apt-get install -y \
         ca-certificates \
-        g++ \
-        gcc \
+        build-essential  \
         git \
-        make \
-        musl-dev \
-        python3 \
-        tzdata;
+        libmcrypt-dev;
 
 # Use the standard /usr/local/src destination
 RUN mkdir -p /usr/local/src/warehouse
@@ -32,23 +29,19 @@ RUN set -xe; \
     mix deps.compile --all; \
     mix release
 
-FROM alpine:3.16 as release
+FROM debian:11.6-slim as release
 
 RUN set -xe; \
-    apk add --update  --no-cache --virtual .runtime-deps \
+    apt-get update &&  \
+    apt-get install -y  \
         ca-certificates \
-        libmcrypt \
-        libmcrypt-dev \
-        openssl \
-        libstdc++ \
-        ncurses-libs \
-        tzdata;
+        libmcrypt4 \
+        openssl;
 
 # Create a `warehouse` group & user
 # I've been told before it's generally a good practice to reserve ids < 1000 for the system
 RUN set -xe; \
-    addgroup -g 1000 -S warehouse; \
-    adduser -u 1000 -S -h /warehouse -s /bin/sh -G warehouse warehouse;
+    adduser --uid 1000 --system --home /warehouse --shell /bin/sh --group warehouse;
 
 ARG APP_NAME=warehouse
 
@@ -77,7 +70,8 @@ ENV \
     APP_REVISION="${VERSION}" \
     MIX_APP="warehouse" \
     MIX_ENV="prod" \
-    SHELL="/bin/bash"
+    SHELL="/bin/bash" \
+    LANG="C.UTF-8"
 
 # Drop down to our unprivileged `warehouse` user
 USER warehouse
