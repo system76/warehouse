@@ -39,7 +39,7 @@ defmodule Warehouse.Clients.Assembly.Connection do
     case init(%{}) do
       {:ok, channel} ->
         Logger.info("Warehouse.Clients.Assembly.Connection reconnected")
-        {:noreply, {:ok, channel}}
+        {:noreply, channel}
     end
   end
 
