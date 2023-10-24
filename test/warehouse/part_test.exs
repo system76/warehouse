@@ -52,7 +52,6 @@ defmodule Warehouse.PartTest do
       %{id: location_id, uuid: location_uuid} = insert(:location, area: "assembly")
       Part.pick_parts([part.uuid], 123, location_uuid)
 
-
       assert %Schemas.Part{location_id: ^location_id} = Repo.get(Schemas.Part, part.id)
       assert %Schemas.Movement{location_id: ^location_id} = Repo.get_by(Schemas.Movement, part_id: part.id)
     end

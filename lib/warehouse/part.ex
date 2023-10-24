@@ -61,27 +61,18 @@ defmodule Warehouse.Part do
 
     part_uuids
     |> list_parts!()
-    |> Enum.reduce(Multi.new(), multi_add_part_to_build(build_id, location))
+    |> Enum.reduce(Multi.new(), add_part_to_build_reducer(build_id, location))
     |> Multi.prepend(remove_parts_from_build(build_id, part_uuids))
     |> Repo.transaction()
     |> report_pick_parts_effects()
   end
 
-  defp multi_add_part_to_build(build_id, location) do
+  defp add_part_to_build_reducer(build_id, location) do
     fn part, multi ->
       multi
       |> Multi.append(add_part_to_build(part, build_id, location.id))
       |> Multi.append(track_part_movement(part, location))
     end
-  end
-
-  defp remove_parts_from_build(build_id, excluded_uuids) do
-    query =
-      from p in Schemas.Part,
-        where: p.assembly_build_id == ^to_string(build_id),
-        where: p.uuid not in ^excluded_uuids
-
-    Multi.update_all(Multi.new(), :remove_parts, query, set: [assembly_build_id: nil])
   end
 
   defp add_part_to_build(part, build_id, location_id) do
@@ -99,6 +90,15 @@ defmodule Warehouse.Part do
       location: location,
       part: part
     })
+  end
+
+  defp remove_parts_from_build(build_id, excluded_uuids) do
+    query =
+      from p in Schemas.Part,
+        where: p.assembly_build_id == ^to_string(build_id),
+        where: p.uuid not in ^excluded_uuids
+
+    Multi.update_all(Multi.new(), :remove_parts, query, set: [assembly_build_id: nil])
   end
 
   defp report_pick_parts_effects({:ok, changes}) do
