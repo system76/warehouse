@@ -61,12 +61,18 @@ defmodule Warehouse.Part do
 
     part_uuids
     |> list_parts!()
-    |> Enum.reduce(Multi.new(), fn part, multi ->
-      Multi.append(multi, add_part_to_build(part, build_id, location.id))
-    end)
+    |> Enum.reduce(Multi.new(), multi_add_part_to_build(build_id, location))
     |> Multi.prepend(remove_parts_from_build(build_id, part_uuids))
     |> Repo.transaction()
     |> report_pick_parts_effects()
+  end
+
+  defp multi_add_part_to_build(build_id, location) do
+    fn part, multi ->
+      multi
+      |> Multi.append(add_part_to_build(part, build_id, location.id))
+      |> Multi.append(track_part_movement(part, location))
+    end
   end
 
   defp remove_parts_from_build(build_id, excluded_uuids) do
@@ -86,6 +92,13 @@ defmodule Warehouse.Part do
       })
 
     Multi.update(Multi.new(), {:update_part, part.id}, changeset)
+  end
+
+  defp track_part_movement(part, location) do
+    Multi.insert(Multi.new(), {:part_movement, part.id}, %Schemas.Movement{
+      location: location,
+      part: part
+    })
   end
 
   defp report_pick_parts_effects({:ok, changes}) do
