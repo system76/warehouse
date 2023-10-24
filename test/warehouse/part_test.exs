@@ -82,12 +82,15 @@ defmodule Warehouse.PartTest do
     end
 
     test "updates the sku availability" do
-      expect(Warehouse.MockEvents, :broadcast_sku_quantities, 2, fn _, _ -> :ok end)
-
-      sku = :sku |> insert() |> supervise()
+      %{id: sku_id} = sku = :sku |> insert() |> supervise()
       storage_location = insert(:location, area: "storage")
       parts = insert_list(4, :part, sku: sku, sku_id: sku.id, location: storage_location)
       location = insert(:location, area: "assembly")
+
+      # because these are coming in asychronously as the result of other tests
+      stub(Warehouse.MockEvents, :broadcast_sku_quantities, fn _, _ -> :ok end)
+      # we're only interested in making sure the one from this test appears
+      expect(Warehouse.MockEvents, :broadcast_sku_quantities, 1, fn ^sku_id, _ -> :ok end)
 
       Sku.update_sku_availability(sku.id)
       Part.pick_parts([hd(parts).uuid], 423, location.uuid)

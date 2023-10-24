@@ -3,7 +3,8 @@ defmodule Warehouse.Schemas.Movement do
 
   import Ecto.Changeset
 
-  alias Warehouse.Schemas.{Location, Part}
+  alias Warehouse.Schemas.Location
+  alias Warehouse.Schemas.Part
 
   @type t :: %__MODULE__{
           location: Location.t(),
@@ -17,11 +18,11 @@ defmodule Warehouse.Schemas.Movement do
     timestamps(updated_at: false)
   end
 
-  def changeset(part, attrs) do
-    part
+  def changeset(movement, attrs) do
+    movement
     |> cast(attrs, [:location_id, :part_id])
     |> validate_required([:location_id, :part_id])
-    |> assoc_constraint(:sku)
+    |> assoc_constraint(:part)
     |> assoc_constraint(:location)
   end
 end
