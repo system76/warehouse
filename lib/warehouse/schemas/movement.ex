@@ -11,7 +11,7 @@ defmodule Warehouse.Schemas.Movement do
           part: Part.t()
         }
 
-  schema "inventory_part_movements" do
+  schema "inventory_movements" do
     belongs_to :location, Location
     belongs_to :part, Part
 

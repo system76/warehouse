@@ -41,7 +41,7 @@ defmodule Warehouse.Repo.Migrations.CreateTables do
       add :sku_id, references(:inventory_skus), null: false
     end
 
-    create table(:inventory_part_movements) do
+    create table(:inventory_movements) do
       add :location_id, references(:inventory_locations), null: false
       add :part_id, references(:inventory_parts), null: false
 
