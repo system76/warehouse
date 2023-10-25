@@ -67,14 +67,6 @@ defmodule Warehouse.Part do
     |> report_pick_parts_effects()
   end
 
-  defp add_part_to_build_reducer(build_id, location) do
-    fn part, multi ->
-      multi
-      |> Multi.append(add_part_to_build(part, build_id, location.id))
-      |> Multi.append(track_part_movement(part, location))
-    end
-  end
-
   defp remove_parts_from_build(build_id, excluded_uuids) do
     query =
       from p in Schemas.Part,
@@ -82,6 +74,14 @@ defmodule Warehouse.Part do
         where: p.uuid not in ^excluded_uuids
 
     Multi.update_all(Multi.new(), :remove_parts, query, set: [assembly_build_id: nil])
+  end
+
+  defp add_part_to_build_reducer(build_id, location) do
+    fn part, multi ->
+      multi
+      |> Multi.append(add_part_to_build(part, build_id, location.id))
+      |> Multi.append(track_part_movement(part, location))
+    end
   end
 
   defp add_part_to_build(part, build_id, location_id) do
