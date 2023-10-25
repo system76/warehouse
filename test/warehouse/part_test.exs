@@ -4,7 +4,9 @@ defmodule Warehouse.PartTest do
   import ExUnit.CaptureLog
   import Mox
 
-  alias Warehouse.{Part, Sku}
+  alias Warehouse.Part
+  alias Warehouse.Sku
+  alias Warehouse.Schemas
 
   setup :verify_on_exit!
 
@@ -33,7 +35,7 @@ defmodule Warehouse.PartTest do
 
       Part.pick_parts([new_part.uuid], 123, location.uuid)
 
-      assert %{assembly_build_id: nil} = Repo.get(Warehouse.Schemas.Part, old_part.id)
+      assert %Schemas.Part{assembly_build_id: nil} = Repo.get(Schemas.Part, old_part.id)
     end
 
     test "logs that a part was assigned to build" do
@@ -43,6 +45,15 @@ defmodule Warehouse.PartTest do
       assert capture_log(fn ->
                Part.pick_parts([part.uuid], 123, location.uuid)
              end) =~ "Assigned Part to Build"
+    end
+
+    test "updates the location when a part is picked" do
+      part = insert(:part)
+      %{id: location_id, uuid: location_uuid} = insert(:location, area: "assembly")
+      Part.pick_parts([part.uuid], 123, location_uuid)
+
+      assert %Schemas.Part{location_id: ^location_id} = Repo.get(Schemas.Part, part.id)
+      assert %Schemas.Movement{location_id: ^location_id} = Repo.get_by(Schemas.Movement, part_id: part.id)
     end
 
     test "weird part assigments result in correct part assignment" do
@@ -70,12 +81,15 @@ defmodule Warehouse.PartTest do
     end
 
     test "updates the sku availability" do
-      expect(Warehouse.MockEvents, :broadcast_sku_quantities, 2, fn _, _ -> :ok end)
-
-      sku = :sku |> insert() |> supervise()
+      %{id: sku_id} = sku = :sku |> insert() |> supervise()
       storage_location = insert(:location, area: "storage")
       parts = insert_list(4, :part, sku: sku, sku_id: sku.id, location: storage_location)
       location = insert(:location, area: "assembly")
+
+      # because these are coming in asychronously as the result of other tests
+      stub(Warehouse.MockEvents, :broadcast_sku_quantities, fn _, _ -> :ok end)
+      # we're only interested in making sure the one from this test appears
+      expect(Warehouse.MockEvents, :broadcast_sku_quantities, 1, fn ^sku_id, _ -> :ok end)
 
       Sku.update_sku_availability(sku.id)
       Part.pick_parts([hd(parts).uuid], 423, location.uuid)

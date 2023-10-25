@@ -1,5 +1,5 @@
 defmodule Warehouse.GRPCCase do
-  use ExUnit.CaseTemplate, async: true
+  use ExUnit.CaseTemplate
 
   require Logger
 

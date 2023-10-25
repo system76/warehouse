@@ -1,5 +1,5 @@
 defmodule Warehouse.AdditiveMapTest do
-  use Warehouse.DataCase, async: true
+  use Warehouse.DataCase
 
   import Warehouse.AdditiveMap
 

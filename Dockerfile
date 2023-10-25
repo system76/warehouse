@@ -1,4 +1,4 @@
-FROM elixir:1.14-slim as build
+FROM elixir:1.14-otp-25-slim as build
 
 # Install deps
 RUN set -xe; \
